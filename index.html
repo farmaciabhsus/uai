@@ -498,16 +498,14 @@ function items(md){
       L.push({k:b+'lme',g,q:'LME apresentado (já preenchido pelo médico)',look:LK.lme});
       L.push({k:b+'cid',g,q:'CID do LME é o mesmo escolhido aqui'+(t.cids.length?': '+t.cids.join(', '):''),look:LK.cid});
       L.push({k:b+'rec',g,q:'Receita médica apresentada',look:LK.rec});
-      L.push({k:b+'rel',g,q:'Relatório médico apresentado (se o checklist da doença exigir)',na:true,look:LK.rel,s:'Relatório médico: o médico precisa fazer com nome completo do paciente, data, carimbo, assinatura e as informações pedidas para a doença.'});
-      L.push({k:b+'ter',g,q:'Termo de Esclarecimento e Responsabilidade apresentado (se o checklist exigir)',na:true,look:LK.ter,s:'Termo de Esclarecimento e Responsabilidade preenchido e assinado, de acordo com a doença.'});
     }
-    L.push({k:b+'form',g,q:RB?'Formulário(s) específico(s) da doença preenchido(s) e assinado(s) pelo médico (se exigido)':'Formulário(s) específico(s) da doença apresentado(s) (se exigido)',link:true,na:true,look:['Os modelos e o checklist oficial de cada doença ficam no site da SES/MG: saude.mg.gov.br/formulariosceaf (use o link abaixo)']});
+    if(!RB)L.push({k:b+'chk',g,q:'Checklist da doença entregue ao usuário (documentos, formulários e exames)',link:true,na:true,look:['Manual, item 1.1: fornecer ao usuário o checklist conforme a doença (CID-10) e a prescrição médica, orientando-o a providenciar os documentos, formulários e exames','Os checklists e formulários oficiais ficam no site da SES/MG (use o link abaixo); a conferência minuciosa é feita pela retaguarda'],s:'Retire o checklist da sua doença (lista de documentos, formulários e exames) com o atendente ou no site da SES-MG.'});else L.push({k:b+'form',g,q:RB?'Formulário(s) específico(s) da doença preenchido(s) e assinado(s) pelo médico (se exigido)':'Formulário(s) específico(s) da doença apresentado(s) (se exigido)',link:true,na:true,look:['Os modelos e o checklist oficial de cada doença ficam no site da SES/MG: saude.mg.gov.br/formulariosceaf (use o link abaixo)']});
     const hH=dsp(t).find(e=>e.c===HC);
     if(!RB&&hH)L.push({k:b+'hcgd',g,q:'Exame apresentado: '+hH.t,na:!p.sexo,dep:true,auto:cond(HC)});
     t.meds.forEach((m,j)=>{const x=med(m),inf=x?x[1]:'';
       if(RB)regras(t,m).filter(e=>e[1]&&!simples(e[1])).slice(0,1).forEach(e=>L.push({k:b+'age'+j,g,q:'Conferir a idade do paciente: '+e[1]+' ('+m+')',na:true}));
       if(CTRL.test(m))L.push({k:b+'ctl'+j,g,q:'Controle especial ('+m+'): receita/notificação especial não é obrigatória na abertura; recomendar prescrição comum (se vier anexada, fica retida)',na:true,hint:inf,look:['Manual, item 5 (prescrição): a Notificação de Receita (amarela, azul e branca) não é obrigatória para abrir o processo','O recomendado é anexar uma prescrição comum (validade de 90 dias)','Receita ou notificação anexada na abertura fica retida: não vale para a 1ª dispensação; orientar a entregar uma nova a cada atendimento (inclusive codeína, morfina e metadona na Via Rápida)']});
-      if(/Termo de Conhecimento/i.test(inf))L.push({k:b+'tcr'+j,g,q:'Termo de Conhecimento de Risco de '+m+(RB?' assinado pelo paciente e pelo médico':' apresentado')});
+      if(RB&&/Termo de Conhecimento/i.test(inf))L.push({k:b+'tcr'+j,g,q:'Termo de Conhecimento de Risco de '+m+(RB?' assinado pelo paciente e pelo médico':' apresentado')});
       if(/B-HCG/i.test(inf)&&!hH)L.push({k:b+'hcg'+j,g,q:'B-HCG (mulher de 10 a 49 anos, validade 15 dias) para '+m+(RB?': resultado conforme exigido':' apresentado'),na:!p.sexo,dep:true,auto:cond(HC)})});
   });
   if(!RB)gFim(L);
