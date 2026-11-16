@@ -372,16 +372,16 @@ const lookHtml=(l,open,k)=>{if(!l||!l.length)return'';const M=curM(),n=l.length;
   return `<div class="look vbox"><div><b>☑ Verificações do documento</b> <span class="pill ${c===n?'p-ok':'p-wait'}" style="font-size:14px;padding:2px 10px" data-cnt="${E(k)}" data-n="${n}">${c}/${n}</span></div><div class="chk" data-vk="${E(k)}">${l.map((x,i)=>`<label class="vlab"><input type="checkbox" ${M[k+'#'+i]?'checked':''} onchange="vchk('${k}',${i},this.checked)"><span>${E(x)}</span></label>`).join('')}</div><a class="vall" href="#" onclick="vall('${k}',${n},true);return false">☑ marcar todas</a> &nbsp; <a class="vall" href="#" onclick="vall('${k}',${n},false);return false">☐ limpar</a></div>`};
 // caixa de seleção da conferência documental (consta / está certo), junto com as verificações
 const presHtml=(i,md)=>{const a=i.auto||curM()[i.k];return `<label class="vlab pres"><input type="checkbox" ${a==='ok'?'checked':''} onchange="this.checked?okAns('${i.k}'):ans('${i.k}',null)"><span><b>${md==='g'?'Consta no atendimento (está aqui)':'Documento/formulário confere (está certo)'}</b></span></label>`};
-function gQuem(L){
-  const g='Documentos de quem solicita (representação)';
+function gQuem(L,gg){
+  const g=gg||'Documentos de quem solicita (representação)';
   L.push({k:'g:cap13',g,q:'LME, campo 13 (atestado de capacidade): quem solicita é a pessoa autorizada',na:true,look:['Paciente capaz: o próprio paciente solicita (campo “NÃO”)','Paciente incapaz ou menor de 18 anos: “SIM” marcado, nome do responsável e assinatura e carimbo do médico','Somente a pessoa indicada no campo 13 pode apresentar e assinar a documentação','Tutela ou curatela (cópia autenticada) pode substituir o campo 13 se estiver em branco ou incorreto','Em complementação ou reavaliação, repetir esta verificação'],s:'Campo 13 do LME: o médico precisa indicar quem é o responsável pelo paciente, ou quem vem solicitar precisa ser essa pessoa.'});
   L.push({k:'g:rep',g,q:'Se não é o próprio paciente: documento que comprova a representação',na:true,look:['Procuração específica do CEAF: original, sem cartório (ou gov.br validada na hora), com poderes para solicitar e retirar medicamentos','Procuração com plenos poderes: original ou cópia autenticada (ou gov.br validada)','Conferir: nome do paciente e do representante, assinatura do outorgante igual à identidade, conteúdo e validade','Declaração de próprio punho (original): só se o paciente é capaz e o campo 13 não indica incapacidade; nome do declarante e do autorizado, finalidade (solicitar medicamentos) e assinatura igual à identidade','Privado de liberdade: Termo de Designação de Representante com identificação do custodiado e dos representantes e assinatura e carimbo do Diretor','Tutela ou curatela: nome do paciente e do tutor/curador, validade e vigência, limites de poderes, original ou cópia autenticada'],s:SM['g:repUAI']});
   L.push({k:'g:repid',g,q:'Se não é o próprio paciente: documento com foto do representante e endereço/telefone anotados',na:true,look:['Cópia do documento de identificação com foto do responsável ou procurador','Anotar o endereço e o telefone dele ou anexar a cópia do comprovante de residência','Privado de liberdade: também cópia do documento do Diretor e dos representantes'],s:'Documento com foto de quem vai representar o paciente, com endereço e telefone.'});
 }
-function gFim(L){
-  const g='Documentos - assinatura e finalização';
-  L.push({k:'g:assin',g,q:'Requerimento assinado e Termo de Adesão entregue',look:['Receber e contar toda a documentação; informar o nº de páginas no Requerimento; imprimir o Termo de Adesão (é o protocolo)','O usuário lê o Termo de Adesão, assinala o campo indicado e assina o Requerimento','Assinatura igual à do documento de identidade','Não assina (não alfabetizado ou impossibilitado por deficiência registrada no documento): coletar a digital','Documento tem assinatura mas o paciente não pode assinar: exigir relatório médico atestando e coletar a digital; anexar o relatório ao processo'],s:'O Requerimento precisa ser assinado pelo paciente ou responsável, com assinatura igual à do documento de identidade.'});
-  L.push({k:'g:orient',g,q:'Usuário saiu com o Termo de Adesão e foi orientado',na:true,look:['Reforçar que a conferência minuciosa, a montagem e o cadastro no SIGAF são feitos pela retaguarda','Voltar à UAI só se houver pendência comunicada pela UAI ou pela Farmácia de Minas','Acompanhar pelo MG App, Portal Cidadão (cidadao.mg.gov.br) ou LigMinas 155, opção 2, com o nº do protocolo e o CPF do paciente'],s:'Guarde o Termo de Adesão e acompanhe o pedido pelo MGapp, cidadao.mg.gov.br ou LigMinas 155.'});
+function gFim(L,g1,g2,novo){
+  const g=g1||'Documentos - assinatura e finalização';
+  L.push({k:'g:assin',g,q:'Requerimento assinado e Termo de Adesão entregue',look:['Receber e contar toda a documentação; informar o nº de páginas no Requerimento; imprimir o Termo de Adesão (é o protocolo)','O usuário lê o Termo de Adesão, assinala o campo indicado e assina o Requerimento','Assinatura igual à do documento de identidade (compatível com o documento apresentado) ou realizar a coleta digital','Assinou por extenso na identidade e rubricou (ou vice-versa): não aceitar; assinatura com abreviações divergentes da identidade: não aceitar. Na dúvida, consultar o suporte backoffice','Não assina (não alfabetizado ou impossibilitado por deficiência registrada no documento): coletar a digital','Documento tem assinatura mas o paciente não pode assinar: exigir relatório médico atestando e coletar a digital; anexar o relatório ao processo'],s:'O Requerimento precisa ser assinado pelo paciente ou responsável, com assinatura igual à do documento de identidade.'});
+  L.push({k:'g:orient',g:g2||g,q:'Usuário saiu com o Termo de Adesão e foi orientado',na:true,look:['Entregar o Termo de Adesão ao cidadão','Informar que a conferência será realizada pela retaguarda (exceto processos urgentíssimos: Guillain-Barré, SIM-P e fenilcetonúria)',novo===false?'Orientar sobre a consulta do andamento da solicitação e a disponibilidade de medicamentos (MG App, Portal Cidadão, LigMinas 155)':'Orientar sobre como acompanhar o protocolo UAI (MG App, Portal Cidadão, LigMinas 155)','Reforçar que a conferência minuciosa, a montagem e o cadastro no SIGAF são feitos pela retaguarda','Voltar à UAI só se houver pendência comunicada pela UAI ou pela Farmácia de Minas','Acompanhar pelo MG App, Portal Cidadão (cidadao.mg.gov.br) ou LigMinas 155, opção 2, com o nº do protocolo e o CPF do paciente'],s:'Guarde o Termo de Adesão e acompanhe o pedido pelo MGapp, cidadao.mg.gov.br ou LigMinas 155.'});
 }
 // ---- retaguarda (Manual, itens 2.5 a 2.9, 3 e 4)
 const LKU={
@@ -413,6 +413,7 @@ function itemsU(){
   }
   S.t.forEach((t,i)=>{
     const g=(t.doenca||'Tratamento '+(i+1))+(t.cids.length?' • '+t.cids.join(', '):''),b='t'+i+':';
+    {const lb=locBlocks(t),blk=p.tipo==='Novo'&&lb.length;L.push({k:b+'cidloc',g,q:blk?'ATENÇÃO: este processo não deveria ter sido aberto na UAI: '+lb[0]:'Local de entrega correto (município, CID e medicamento)',auto:blk?'no':'ok',look:lookLoc(t),s:'Este pedido não podia ser aberto na UAI. A equipe vai indicar o local certo.'})}
     if(sxErro(t.doenca))L.push({k:b+'sx',g,q:sxErro(t.doenca),auto:'no'});
     t.meds.forEach((m,j)=>{const r=regras(t,m),x=med(m),inf=x?x[1]:'',nm=nz(m);
       L.push({k:b+'rem'+j,g,q:m+': consta na REMEMG como medicamento do CEAF',int:true,look:['Primeira lista a consultar: REMEMG (saude.mg.gov.br/obtermedicamentos)','Mostra se o SUS fornece e em qual componente (Básico, Estratégico ou Especializado)','Se não for do CEAF, orientar o paciente a procurar o local da coluna “Onde encontrar”']});
@@ -454,7 +455,7 @@ function listaConf(md){
   st.L.filter(i=>!i.cu).forEach(i=>{
     if(i.g!==g){g=i.g;h+=`<h2>${E(g)}</h2>`}
     const a=i.auto||M[i.k],B=(v,t)=>`<button class="${a===v?'on '+v:v}" onclick="${v==='ok'&&a!=='ok'?`okAns('${i.k}')`:`ans('${i.k}',${a===v?'null':`'${v}'`})`}">${t}</button>`;
-    h+=`<div class="card cfi ${a==='ok'?'cok':a==='no'?'cno':''}"><div class="q2">${E(i.q)}</div>${i.auto||md==='g'?'':presHtml(i,md)}${lookHtml(lk(i),1,i.k)}`+
+    h+=`<div class="card cfi ${a==='ok'?'cok':a==='no'?'cno':''}"><div class="q2">${E(i.q)}</div>${i.bloq&&a==='no'?'<div class="warn">🛑 NÃO recolher a documentação: orientar o cidadão.</div>':''}${i.auto||md==='g'?'':presHtml(i,md)}${lookHtml(lk(i),1,i.k)}`+
     (i.auto?`<span class="pill ${i.auto==='ok'?'p-ok':i.auto==='na'?'p-wait':'p-no'}">${i.auto==='ok'?'✅ conferido automaticamente':i.auto==='na'?'➖ não se aplica ao paciente':'❌ divergente (automático)'}</span>`:`<div class="cfb${md==='g'?' cfr':''}">${md==='g'?B('ok','✅ Consta no atendimento'):''}${B('no',md==='g'?'❌ Não veio':'❌ Falta ou errado')}${i.na?B('na','➖ Não se aplica'):''}</div>`)+
     (i.link?` <a href="${LINK}" target="_blank" rel="noopener">Ver formulários e checklist oficiais (SES/MG)</a>`:'')+`</div>`;
   });
@@ -462,7 +463,50 @@ function listaConf(md){
 }
 
 // ---- regras de conferência
+function itemsG(){
+  const L=[],p=S.p,novo=p.tipo==='Novo',reav=p.tipo==='Reavaliação',r=p.resid||'';
+  let n=0;const grp=t=>(++n)+'. '+t;
+  const EXC='G61.0, B34.2, E70.0, E70.1, G12.0, G12.1, D59.5, Z94.0 a Z94.4 e Z94.8 (transplantes)';
+  const g1=grp('Local de conferência dos documentos');
+  if(novo){
+    const lines=['Confirmar o diagnóstico informado no LME','Confirmar o município de residência (comprovante de endereço)','Verificar o local correto de atendimento: UAI, Farmácia de Minas, Farmácia Judicial ou PDCEAF (Manual, item 1.2)'];
+    if(r===OUTRA)lines.push('⛔ Residente de outra Regional de Saúde: só os CIDs excepcionais abrem processo na UAI ('+EXC+'). Nos demais casos, NÃO recolher e encaminhar à Regional do município de residência');
+    if(r&&MDESC.some(m=>m.toLowerCase()===r.toLowerCase()))lines.push('⛔ '+r+' tem atendimento municipal (PDCEAF): só os CIDs excepcionais abrem processo na UAI ('+EXC+'). Nos demais casos, NÃO recolher e encaminhar à farmácia municipal');
+    lines.push('Insulinas: encaminhar à farmácia municipal (posto ou UBS), para solicitação e dispensação','Palivizumabe: solicitação na Farmácia de Minas (só no período sazonal)','Fibrose cística: encaminhar à Farmácia Judicial','Paciente já atendido na Farmácia de Minas (renovação, inclusão ou troca de medicamento, monitoramento): encaminhar à Farmácia de Minas','CIDs G61.0, B34.2, E70.0 e E70.1: o paciente, responsável ou representante deve aguardar a conferência completa','Se NÃO autorizado: orientar o cidadão e NÃO recolher documentos');
+    L.push({k:'g:n1',g:g1,q:'Local correto de atendimento confirmado',int:true,bloq:true,look:lines});
+  }else{
+    L.push({k:'g:n1',g:g1,q:'Entrega na mesma UAI da documentação inicial; processo localizado',int:true,bloq:true,look:['Verificar se a entrega está sendo realizada na mesma UAI da documentação inicial (ver o local no Termo de Adesão)','Consultar o protocolo inicial ou localizar o processo no sistema Atende','Reavaliação de processo parcialmente deferido: entregar na Farmácia de Minas','Se NÃO autorizado: orientar o cidadão e NÃO recolher documentos']});
+  }
+  if(!novo){
+    const g=grp('Status do processo');
+    L.push({k:'g:stat',g,q:'Status do processo identificado: '+p.tipo,int:true,look:['Reavaliação (processo devolvido ou indeferido – SIGAF)','Complementação ou correção de documentos (Atende)']});
+    if(!reav)L.push({k:'g:comp',g,q:'Documento que resolve a pendência informada pelo analista apresentado',na:true});
+    else L.push({k:'g:reav',g,q:'Documentos novos da reavaliação (exames ou relatórios de acompanhamento) apresentados',na:true});
+  }
+  const g2=grp('Autorização do solicitante');
+  L.push({k:'g:id',g:g2,q:'Cópia do documento de identificação com foto do paciente e/ou representante recolhida',na:true,bloq:true,look:LK.id,s:SM['g:id']});
+  const k0=L.length;gQuem(L,g2);L.slice(k0).forEach(i=>{i.bloq=true});
+  if(!novo){
+    const g=grp('Prazo para entrega dos documentos complementares');
+    L.push({k:'g:prazo',g,q:'Prazo inferior a 180 dias',int:true,bloq:true,look:['Prazo inferior a 180 dias','Contagem: 180 dias a partir da data do parecer técnico (reavaliação) ou da etapa “complementação/correção” registrada no Atende','Se prazo superior a 180 dias: orientar o cidadão a abrir novo processo e NÃO recolher documentos']});
+  }
+  const g3=grp('Conferência do CID-10 (LME – campo 9)');
+  L.push({k:'g:cid3',g:g3,q:'CID-10 do campo 9 conferido',bloq:true,look:['CID legível e sem rasuras','CID completo e coerente','CID autorizado para abertura de processo na UAI','Se NÃO autorizado: orientar o cidadão e NÃO recolher documentos'],s:'LME: o CID-10 (campo 9) precisa estar legível, completo e sem rasuras. Peça ao médico para corrigir.'});
+  // documentos obrigatórios em qualquer processo: só presença, sem depender de CID ou medicamento
+  const gD='Documentos obrigatórios (todos os processos): presença',nc=!novo,dica=nc?' (só o que a pendência pede)':'';
+  [['cpf','CPF do paciente apresentado'+dica,LK.cpf,SM['g:cpf'],nc],['cns','Cartão Nacional de Saúde (CNS) ou número do CNS por escrito'+dica,LK.cns,SM['g:cns'],nc],['res','Comprovante de endereço ou declaração de residência apresentado'+dica,LK.res,SM['g:res'],true],['rec','Prescrição médica apresentada'+dica,LK.rec,'Receita (prescrição) do médico, em original, com nome genérico, dose e modo de usar.',nc],['lme','LME (laudo de solicitação) apresentado'+dica,LK.lme,SM['g:lme'],nc]].forEach(([k,q,look,sm,na])=>L.push({k:'g:'+k,g:gD,q,na,look,s:sm}));
+  const g4=grp('Prioridade de conferência');
+  const vn=t=>[...new Set(VIA.filter(v=>v[0]===t).map(v=>v[1].replace(/ \(.*\)$/,'')))].join('; ');
+  L.push({k:'g:prio',g:g4,q:'Prioridade verificada: urgentíssimo com documentação completa, via rápida ou de urgência conferida, ou demais processos encaminhados à retaguarda',bloq:true,s:'Este pedido é urgentíssimo: a documentação completa do checklist da doença precisa estar correta antes de recolher. Complete ou corrija o que faltar.',look:['Urgentíssimo (Síndrome de Guillain-Barré, SIM-P ou fenilcetonúria): conferir toda a documentação do checklist do diagnóstico no guichê, na presença do solicitante','Urgentíssimo: se for necessário complementar ou corrigir documentos, orientar o cidadão e NÃO recolher documentos','Urgentíssimo, depois de aberto: avisar a retaguarda para encaminhar ao SEI imediatamente (até 12h) e sinalizar no Teams','Via Rápida (análise em até 3 dias úteis): '+vn('r'),'Via de Urgência (análise em até 5 dias úteis): '+vn('u'),'Via Rápida e Via de Urgência: conferir conforme os itens 3.1 e 3.2 do Manual de Conferência e Execução do CEAF','Demais processos: encaminhar o processo para a retaguarda realizar a conferência']});
+  const gR=grp(novo?'Requerimento e protocolo':'Requerimento');
+  L.push({k:'g:req',g:gR,q:novo?'Requerimento CEAF preenchido, protocolo gerado e Termo de Adesão impresso':'Requerimento CEAF preenchido e Termo de Adesão impresso',int:true,look:(novo?['Gerar o número de protocolo','Incluir a etapa “Recebido” no sistema Atende']:[]).concat(['Preencher todos os campos obrigatórios do Requerimento CEAF','Contar os documentos entregues e preencher o campo correspondente','Imprimir o Termo de Adesão'])});
+  const gS=grp('Coleta de assinatura'),gF=grp('Finalização do atendimento');
+  gFim(L,gS,gF,novo);
+  L.forEach(i=>{i.s=i.s||simpOf(i,'g')});
+  return L;
+}
 function items(md){
+  if(md==='g')return itemsG();
   const L=[],p=S.p,RB=md==='r',ag=RB?idade():null;
   if(RB){const GC='Documentos e formulários comuns a todos os CIDs e medicamentos';
     {const G=stat('g');G.L.filter(i=>!i.auto&&G.M[i.k]==='ok').forEach(i=>L.push({k:'p:'+i.k,g:'Lista do guichê',og:i.g,q:'Consta no processo: '+i.q,ps:i}))}
@@ -523,14 +567,7 @@ function bloqueios(){
   if(!(p.atend||'').trim())B.push({m:'Falta o nome completo do atendente',s:0});
   if(!(+p.pag>0))B.push({m:'Falta o número de páginas do processo',s:0});
   if(!(p.resid||'').trim())B.push({m:'Falta o município de residência do paciente',s:0});
-  if(!S.t.length)B.push({m:'Adicione pelo menos 1 tratamento',s:1});
-  S.t.forEach((t,i)=>{if(!t.doenca)B.push({m:'Tratamento '+(i+1)+': escolha a doença',s:1});if(!t.cids.length)B.push({m:'Tratamento '+(i+1)+': escolha o CID',s:1});if(!t.meds.length)B.push({m:'Tratamento '+(i+1)+': escolha o medicamento',s:1});
-    if(t.doenca&&!dis(t.doenca))B.push({m:'Tratamento '+(i+1)+': doença não está na lista do CEAF',s:1});
-    const ag=idade();
-    if(sxErro(t.doenca))B.push({m:'Tratamento '+(i+1)+': '+sxErro(t.doenca),s:0});
-    t.meds.forEach(m=>{const r=regras(t,m);if(t.cids.length&&!r.length)B.push({m:m+' não é indicado para o CID '+t.cids.join(', ')+' ('+t.doenca+')',s:1});
-      else if(ag!==null)r.forEach(e=>{if(!simples(e[1]))return;const[mn,mx]=lim(e[1]);if(mn!==null&&ag<mn||mx!==null&&ag>mx)B.push({m:m+': paciente com '+fmtIdade(ag)+', fora da regra “'+e[1]+'”',s:0})})})});
-  if(S.p.tipo==='Novo')S.t.forEach((t,i)=>locBlocks(t).forEach(m=>B.push({m:'Tratamento '+(i+1)+': '+m,s:1,loc:true})));
+  stat('g').no.filter(i=>i.bloq&&!i.auto).forEach(i=>B.push({m:'NÃO recolher a documentação: '+i.q+' (marcado como “Não veio”)',s:0,loc:true}));
   return B;
 }
 const stat=md=>{md=md||(S.mode==='r'?'r':S.mode==='u'?'u':'g');const M=md==='r'?S.r:md==='u'?S.u:S.a,L=md==='u'?itemsU():items(md);let ok=0;const no=[],wait=[];L.forEach(i=>{const a=i.auto||M[i.k];if(a==='ok'||a==='na')ok++;else if(a==='no')no.push(i);else wait.push(i)});return{L,ok,no,wait,M}};
@@ -539,7 +576,7 @@ const go=n=>{if((S.mode==='g'||S.mode==='u')&&n===1)n=0;S.step=n;S.cur=0;R();scr
 const home=()=>{S.mode='home';R();scrollTo(0,0)};
 function novo(){S.id=uid();S.opened=false;S.t=[];S.a={};S.r={};S.u={};S.txt=null;S.decl={on:false,fill:true};Object.assign(S.p,{fora:'',resid:'',tipo:'Novo',atend:atendPad(),unid:'Belo Horizonte',caf:'Belo Horizonte',nome:'',social:'',cpf:'',tel:'',nasc:'',sexo:'',email:'',pag:'',sigaf:'',sei:'',data:iso,pre:'FAR'+ddmmaaaa(iso),suf:'',prot:'FAR'+ddmmaaaa(iso)});S.mode='g';go(0)}
 function startG(){novo()}
-function startSA(md){S.mode=md;S.step=0;S.t=[];S.a={};S.r={};S.u={};S.txt=null;Object.assign(S.p,{fora:'',nasc:'',sexo:'',tipo:'Novo'});R();scrollTo(0,0)}
+function startSA(md){S.mode=md;S.step=0;S.t=[];S.a={};S.r={};S.u={};S.txt=null;Object.assign(S.p,{fora:'',resid:'',nasc:'',sexo:'',tipo:'Novo'});R();scrollTo(0,0)}
 function R(){R0();a11y()}
 function a11y(){let c=0;const on=document.querySelectorAll('.st.on')[0];if(on&&on.scrollIntoView)on.scrollIntoView({inline:'center',block:'nearest'});document.querySelectorAll('#app label:not(.vlab)').forEach(l=>{let n=l.nextElementSibling;if(n&&!/^(INPUT|SELECT|TEXTAREA)$/.test(n.tagName))n=n.querySelector&&n.querySelector('input,select,textarea');if(n){if(!n.id)n.id='fld'+(++c);l.htmlFor=n.id}})}
 addEventListener('keydown',e=>{const t=e.target;if((e.key==='Enter'||e.key===' ')&&t&&t.classList&&t.classList.contains('st')){e.preventDefault();t.click()}});
@@ -547,7 +584,7 @@ function R0(){
   document.getElementById('print').innerHTML='';
   let h=`<div class="st" role="button" tabindex="0" onclick="home()"><b>🏠</b>Início</div>`;
   if(S.mode==='g'){const st=stat('g'),n=st.no.length+st.wait.length;
-    h+=[[0,'Paciente e conferência','🧒'],[2,'Capa guichê','🖨️'],[3,'Conferir','✅'],[4,'Recibo Guichê','🧾']].map(([i,x,ic])=>`<div class="st ${S.step===i?'on':''} ${i<S.step?'done':''}" role="button" tabindex="0" ${S.step===i?'aria-current="step"':''} onclick="go(${i})"><b>${ic}</b>${x}${i===3&&n&&S.t.length?` <span class="pill p-no">${n}</span>`:''}</div>`).join('')}
+    h+=[[0,'Paciente e conferência','🧒'],[2,'Capa guichê','🖨️'],[3,'Conferir','✅'],[4,'Recibo Guichê','🧾']].map(([i,x,ic])=>`<div class="st ${S.step===i?'on':''} ${i<S.step?'done':''}" role="button" tabindex="0" ${S.step===i?'aria-current="step"':''} onclick="go(${i})"><b>${ic}</b>${x}${i===3&&n?` <span class="pill p-no">${n}</span>`:''}</div>`).join('')}
   else if(S.mode==='u'||S.mode==='r'){const st=stat(S.mode),n=st.no.length+st.wait.length,okD=!!(S.p.nasc&&S.p.sexo);
     if(!okD)S.step=0;
     h+=(S.mode==='u'?[[0,'Dados e conferência','🧑'],[2,'Conferir','✅'],[3,'Extras','➕'],[4,SA.u.rc,'🖨️']]:['Dados','Conferência','Conferir','Extras',SA[S.mode].rc].map((x,i)=>[i,x,['🧑','🔎','✅','➕','🖨️'][i]])).map(([i,x,ic])=>`<div class="st ${S.step===i?'on':''} ${i<S.step?'done':''}" role="button" tabindex="0" ${S.step===i?'aria-current="step"':''} ${i&&!okD?'aria-disabled="true"':''} onclick="${i&&!okD?'':`go(${i})`}"><b>${ic}</b>${x}${i===2&&n&&S.t.length?` <span class="pill p-no">${n}</span>`:''}</div>`).join('')}
@@ -567,7 +604,7 @@ function P0(){
   <div class="card"><b>SIGAF e Atendente</b><div class="g2"><div><label>Nº protocolo UAI (complete) *</label><div class="fld"><b id="pre">${E(p.pre||'')}</b><input value="${E(p.suf||'')}" placeholder="complete o número" oninput="S.p.suf=this.value.trim();S.p.prot=S.p.pre+S.p.suf"></div></div><div><label>Nome completo do atendente *</label><input value="${E(p.atend)}" oninput="S.p.atend=this.value;lsAtend(this.value)"></div><div>${inp('sigaf','Nº processo SIGAF (depois)')}</div><div>${inp('sei','Nº SEI (depois)')}</div></div></div>`;
   foot.innerHTML=`<button class="btn" onclick="go(1)">Próximo: remédios 💊</button>`;
 }
-function blocoTrat(){const fo=S.mode==='g'?`<div class="card"><b>⚠ O medicamento pedido é um destes?</b><div class="hint">Não abrem processo na UAI e não estão na lista abaixo (Manual, item 1.2).</div><span class="chip ${S.p.fora==='insulina'?'on':''}" onclick="S.p.fora=S.p.fora==='insulina'?'':'insulina';R()">Insulina glargina / asparte / lispro</span><span class="chip ${S.p.fora==='palivizumabe'?'on':''}" onclick="S.p.fora=S.p.fora==='palivizumabe'?'':'palivizumabe';R()">Palivizumabe</span></div>`:'';return fo+`<h2 style="margin-top:0">💊 Doença, CID e medicamentos</h2><div class="hint">Um processo pode ter vários: cada um com sua doença, CID e medicamentos.</div>
+function blocoTrat(){const fo=S.mode==='u'?`<div class="card"><b>⚠ O medicamento pedido é um destes?</b><div class="hint">Não abrem processo na UAI e não estão na lista abaixo (Manual, item 1.2): se for o caso, marque aqui para o sistema avisar.</div><span class="chip ${S.p.fora==='insulina'?'on':''}" onclick="S.p.fora=S.p.fora==='insulina'?'':'insulina';R()">Insulina glargina / asparte / lispro</span><span class="chip ${S.p.fora==='palivizumabe'?'on':''}" onclick="S.p.fora=S.p.fora==='palivizumabe'?'':'palivizumabe';R()">Palivizumabe</span></div>`:'';return fo+`<h2 style="margin-top:0">💊 Doença, CID e medicamentos</h2><div class="hint">Um processo pode ter vários: cada um com sua doença, CID e medicamentos.</div>
   <datalist id="dl-d">${DD.filter(d=>!sxDoenca(d.n)||!S.p.sexo||sxDoenca(d.n)===S.p.sexo).map(d=>`<option value="${E(d.n)}">`).join('')}</datalist>`+
   S.t.map((t,i)=>{const d=dis(t.doenca);return`<div class="card"><div class="row" style="align-items:center"><b style="font-size:20px">Tratamento ${i+1}</b><button class="btn sm no" style="flex:0" onclick="delT(${i})">Tirar</button></div>
   <label>1. Doença (comece a digitar)</label><input list="dl-d" value="${E(t.doenca)}" onchange="setD(${i},this.value)" placeholder="Ex.: Artrite Reumatoide">${sxErro(t.doenca)?`<div class="warn">${E(sxErro(t.doenca))}. Corrija o sexo na primeira etapa ou escolha outra doença.</div>`:''}
@@ -585,9 +622,8 @@ function P1(){
   foot.innerHTML=`<button class="btn ghost" style="flex:.4" onclick="go(0)">⬅️</button><button class="btn" onclick="go(2)">Próximo: Capa guichê 🖨️</button>`;
 }
 function P01(){
-  if(!S.t.length){S.t.push({doenca:'',cids:[],meds:[]});return R()}
   P0();
-  app.innerHTML=app.innerHTML.replace('🧒 Quem é o paciente?','🧒 Paciente e conferência')+blocoTrat()+`<h2>🧾 Conferência do que foi entregue</h2><div class="hint">Escolha doença, CID e medicamentos do LME e confira o que foi entregue, item por item (“O que olhar” traz o que verificar). Triagem de presença: a conferência minuciosa é feita pela retaguarda.</div>`+listaConf('g')+outrasInfo();
+  app.innerHTML=app.innerHTML.replace('🧒 Quem é o paciente?','🧒 Paciente e conferência')+`<h2>🧾 Conferência do que foi entregue</h2><div class="hint">Os itens seguem o Fluxo resumido – Checklist (guichê) e os documentos obrigatórios de todo processo. Não é preciso informar doença, CID ou medicamento: essa conferência é feita pela retaguarda.</div>`+listaConf('g')+outrasInfo();
   foot.innerHTML=`<button class="btn" onclick="go(2)">Próximo: Capa guichê 🖨️</button>`;
 }
 function setD(i,v){const d=dis(v);S.t[i].doenca=d?d.n:v;S.t[i].cids=d&&d.cids.length===1?[d.cids[0]]:[];S.t[i].meds=[];RT()}
@@ -602,7 +638,7 @@ function Pconf(md){
   if(bl.length){app.innerHTML=`<h1>✋ Falta preencher antes</h1>${bl.map(b=>`<div class="warn">${E(b.m)} <button class="btn sm" onclick="go(${b.s})">Ir lá</button></div>`).join('')}`;foot.innerHTML=`<button class="btn" onclick="go(${bl[0].s})">Resolver agora</button>`;return}
   const tot=st.L.length,pct=tot?Math.round(100*st.ok/tot):0,f=st.wait.find(i=>!i.cu),auto=i=>!!i.auto;
   let h=`<h1>${g?'✅ Conferindo o que foi entregue':SA[md].h+' '+SA[md].n}</h1>${g?'':`<div class="hint">${resumoSA()}</div>`}<div class="bar"><i style="width:${pct}%"></i></div><div class="hint">${st.ok} de ${tot} conferidos${st.no.length?` • <b style="color:var(--no)">${st.no.length} com problema</b>`:''}</div>`;
-  if(f)h+=`<div class="card"><span class="pill p-wait">${E(f.g)}</span><div class="q">${E(f.q)}</div>${md==='g'?'':presHtml(f,md)}${lookHtml(lk(f),1,f.k)}
+  if(f)h+=`<div class="card"><span class="pill p-wait">${E(f.g)}</span><div class="q">${E(f.q)}</div>${f.bloq?'<div class="note">Se não estiver certo: orientar o cidadão e NÃO recolher a documentação.</div>':''}${md==='g'?'':presHtml(f,md)}${lookHtml(lk(f),1,f.k)}
   ${f.k.startsWith('p:')?`<button class="btn sm ghost" onclick="allP()">✅ Todos os itens da lista constam</button> `:''}${f.link?`<a href="${LINK}" target="_blank" rel="noopener">Ver formulários e checklist oficiais (SES/MG)</a>`:''}
   ${g?`<div class="cfr cfrb"><button class="btn ok" onclick="okAns('${f.k}')">✅ Consta no atendimento</button><button class="btn no" onclick="ans('${f.k}','no')">❌ Não veio</button>${f.na?`<button class="btn na" onclick="ans('${f.k}','na')">➖ Não se aplica</button>`:''}</div>`:`<div class="big"><button class="btn no" onclick="ans('${f.k}','no')">❌ Falta ou está errado</button>${f.na?`<button class="btn na" onclick="ans('${f.k}','na')">➖ Não se aplica</button>`:''}</div>`}</div>`;
   else if(!st.no.length)h+=(!g&&st.wait.length?`<div class="note">✅ Itens padrão conferidos. Falta conferir os pontos adicionais na próxima etapa.</div>`:`<div class="good"><b>🎉 Tudo conferido!</b> ${g?'Pode gerar o Recibo Guichê.':'Pode gerar o '+SA[md].rc+'.'}</div>`);
@@ -670,7 +706,7 @@ function PD(){
   <div class="card"><label>Que tipo de processo é?</label>${TIPOS.map(t=>`<span class="chip ${p.tipo===t?'on':''}" onclick="S.p.tipo='${t}';R()">${t}</span>`).join('')}
   <label>Data de nascimento *</label><input type="date" value="${E(p.nasc)}" max="${iso}" min="1900-01-01" ${S.mode==='u'?`onchange="S.p.nasc=this.value;R()"`:`oninput="S.p.nasc=this.value;document.getElementById('pdok').disabled=!(S.p.nasc&&S.p.sexo&&S.p.nasc<=iso)"`}>
   <label>Sexo do paciente *</label>${[['F','Feminino'],['M','Masculino']].map(([v,l])=>`<span class="chip ${p.sexo===v?'on':''}" onclick="S.p.sexo='${v}';R()">${l}</span>`).join('')}
-  <div class="hint">Nascimento e sexo ativam as regras de idade, de sexo e do Beta-HCG (mulheres de 10 a 49 anos).</div></div>`;
+  ${S.mode==='u'?`<label>Município de residência do paciente (para conferir o local de entrega)</label><select onchange="S.p.resid=this.value;R()"><option value="">(escolha)</option>${RESID.map(u=>`<option ${String(S.p.resid||'').toLowerCase()===u.toLowerCase()?'selected':''}>${u}</option>`).join('')}</select>`:''}<div class="hint">Nascimento e sexo ativam as regras de idade, de sexo e do Beta-HCG (mulheres de 10 a 49 anos).</div></div>`;
   foot.innerHTML=`<button id="pdok" class="btn ok" ${okD?'':'disabled'} onclick="go(1)">Próximo: remédios 💊</button>`;
 }
 function PDU(){
@@ -769,7 +805,7 @@ function simpOf(i,md){
 }
 // chave comum: o mesmo problema visto no guichê e na retaguarda aparece uma vez só
 const grupoTxt=i=>{const g=i.og||i.g;return /^(Documentos|Complementação|Reavaliação)/.test(g)?'DOCUMENTOS DO PACIENTE':'TRATAMENTO: '+g.split(' • ')[0].toUpperCase()};
-function listG(){return stat('g').no.map(i=>({g:grupoTxt(i),s:i.s}))}
+function listG(){return stat('g').no.filter(i=>!i.int).map(i=>({g:grupoTxt(i),s:i.s}))}
 function buildTxt(L){
   const p=S.p,n1=(p.nome||'').trim().split(/\s+/)[0]||'',pn=n1?n1[0].toUpperCase()+n1.slice(1).toLowerCase():'',oi='Olá'+(pn?', '+pn:'')+'!';
   if(!L.length)return oi+'\nSeu pedido de remédio (protocolo '+p.prot+') foi conferido e não tem nenhuma pendência.\nAgora é só esperar a resposta. Veja pelo MGapp, pelo site cidadao.mg.gov.br ou ligue 155 (LigMinas).';
@@ -870,7 +906,7 @@ function pgChk(){
 }
 
 // ---------------- PÁGINA 4 – LISTA DE PENDÊNCIAS (só quando houver) ----------------
-const pendsG=()=>{const st=stat('g');return [...st.no,...st.wait].filter(i=>!i.auto)};
+const pendsG=()=>{const st=stat('g');return [...st.no,...st.wait].filter(i=>!i.auto&&!i.int)};
 function pgPend(){
   const p=S.p,st=stat('g'),P=pendsG();
   return `<div class="sheet pd">${plogo()}<h3>LISTA DE PENDÊNCIAS</h3><div class="sub">Para o paciente ou responsável</div>${cab()}
