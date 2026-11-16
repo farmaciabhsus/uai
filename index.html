@@ -186,6 +186,30 @@ a{color:var(--pri);font-weight:600;text-decoration:underline}
 .logo-wrap{max-width:120px}.logo-wrap img{max-width:100%;object-fit:contain}
 @media (max-width:480px){.brand b{font-size:16px}.brand>span:last-child{display:none}}
 .cfr{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px;margin-top:10px}.cfr.cfrb{margin-top:14px}.cfr button{min-width:0;width:100%;min-height:58px;padding:8px 6px;font-size:15px;line-height:1.2;display:flex;align-items:center;justify-content:center;text-align:center;border-radius:12px}.cfb.cfr button.ok:not(.on){border-color:var(--ok);color:var(--ok)}.cfb.cfr button.no:not(.on){border-color:var(--no);color:var(--no)}
+
+/* ===== Card do documento (guichê e retaguarda) ===== */
+.dcard{background:#fff;border:1px solid var(--bd);border-left:6px solid var(--pri);border-radius:14px;box-shadow:var(--sh);margin:12px 0;overflow:hidden;transition:border-color .15s}
+.dcard.st-ok{border-left-color:var(--ok)}.dcard.st-no{border-left-color:var(--no)}.dcard.st-pc{border-left-color:var(--warn)}.dcard.st-na{border-left-color:var(--na)}
+.dhead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px 4px}
+.dgrp{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-bottom:4px}
+.dtitle{margin:0;font-size:20px;line-height:1.25;font-weight:800;color:var(--tx)}
+.dbadge{flex:none;font-size:13px;font-weight:800;line-height:1;padding:6px 10px;border-radius:99px;white-space:nowrap;background:var(--prib);color:var(--pri)}
+.st-ok .dbadge{background:var(--okb);color:var(--ok)}.st-no .dbadge{background:var(--nob);color:var(--no)}.st-pc .dbadge{background:var(--warnb);color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn)}.st-na .dbadge{background:#EEF1F4;color:var(--na)}
+.dbody{padding:2px 16px 16px}
+.dbody .look{margin:8px 0 0}
+.dsec{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:14px 0 8px}
+.dact{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
+.dbtn{font:inherit;font-size:15px;font-weight:700;line-height:1.2;min-height:60px;padding:8px 6px;border-radius:12px;border:1.5px solid var(--bd2);background:#fff;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;transition:background .15s,box-shadow .15s,transform .05s}
+.dbtn .di{font-size:20px;line-height:1}
+.dbtn:active{transform:scale(.98)}
+.dbtn.d-no{border-color:var(--no);color:var(--no)}.dbtn.d-pc{border-color:var(--warn);color:var(--warn)}.dbtn.d-ok{border-color:var(--ok);color:var(--ok)}.dbtn.d-na{border-color:var(--bd2);color:var(--na)}
+.dbtn.d-no:hover{background:var(--nob)}.dbtn.d-pc:hover{background:var(--warnb)}.dbtn.d-ok:hover{background:var(--okb)}.dbtn.d-na:hover{background:#EEF1F4}
+.dbtn.on{color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.2)}
+.dbtn.on.d-no{background:var(--no);border-color:var(--no)}.dbtn.on.d-pc{background:var(--warn);border-color:var(--warn)}.dbtn.on.d-ok{background:var(--ok);border-color:var(--ok)}.dbtn.on.d-na{background:var(--na);border-color:var(--na)}
+.dauto{margin-top:12px;padding:10px 12px;border-radius:10px;font-weight:700;font-size:15px}
+.dauto.d-ok{background:var(--okb);color:var(--ok)}.dauto.d-no{background:var(--nob);color:var(--no)}.dauto.d-na{background:#EEF1F4;color:var(--na)}
+.dlink{display:inline-block;margin-top:12px;font-weight:700}
+@media(max-width:520px){.dact{grid-template-columns:repeat(2,minmax(0,1fr))}.dtitle{font-size:18px}.dhead{flex-direction:column;gap:8px}}
 </style></head><body>
 <header><div class="brand"><span class="logo-wrap" id="logoWrap" hidden><img id="logoSUS" alt="Sistema Único de Saúde (SUS)"></span><svg id="brandIco" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M12 8v8M8 12h8"/></svg><b>Farmácia SUS · CEAF</b></div><div class="steps" id="steps"></div></header>
 <main id="app"></main>
@@ -449,11 +473,23 @@ function itemsU(){
   L.push({k:'u:sigafl',g:GM,q:'Processo e LME cadastrados no SIGAF',int:true,look:['No LME-Solicitação, “Data validade início” é a data do atendimento; confirmar emissão nos últimos 90 dias','Biológicos e inalatórios têm forma de cadastro específica (Manual, itens 5.1 e 5.2)','Depois de salvar o LME o processo entra “em certificação” e não pode mais ser editado: se errar, pedir o cancelamento pelo Teams e recadastrar','Privado de liberdade: marcar “Sistema prisional” no Check List de Documentos Obrigatórios']});
   cxItems('u').forEach(i=>L.push(i));L.forEach(i=>{i.s=i.s||simpOf(i,'u')});return L;
 }
+// ---- card do documento (guichê e retaguarda): título, verificações e 4 situações
+const DST={wait:['⏳','A conferir'],ok:['✅','Sem pendências'],pc:['⚠️','Com pendências'],no:['❌','Pendente'],na:['➖','Não se aplica']};
+function docCard(i,md,single){
+  const M=curM(),k=i.k,a=i.auto||M[k],pc=!i.auto&&!!M[k+'~pc'],stt=i.auto?(a==='ok'?'ok':a==='na'?'na':'no'):pc?'pc':(a||'wait'),on=v=>v==='no'?(a==='no'&&!pc):v==='pc'?pc:a===v;
+  const bt=(cls,ic,tx,v,go)=>`<button type="button" class="dbtn ${cls}${on(v)?' on':''}" aria-pressed="${on(v)}" onclick="${on(v)?`ans('${k}',null)`:go}"><span class="di">${ic}</span><span>${tx}</span></button>`;
+  const bad=stt==='no'||stt==='pc';
+  const acts=i.auto?`<div class="dauto ${i.auto==='ok'?'d-ok':i.auto==='na'?'d-na':'d-no'}">${i.auto==='ok'?'✅ Conferido automaticamente':i.auto==='na'?'➖ Não se aplica ao paciente':'❌ Divergente (automático)'}</div>`:
+   `<div class="dsec">Situação do documento</div><div class="dact" role="group" aria-label="Situação do documento">${bt('d-no','❌','Pendente (falta)','no',`ans('${k}','no')`)}${bt('d-pc','⚠️','Consta COM pendências','pc',`ansPc('${k}')`)}${bt('d-ok','✅','Consta SEM pendências','ok',`okAns('${k}')`)}${i.na?bt('d-na','➖','Não se aplica','na',`ans('${k}','na')`):''}</div>`;
+  return `<div class="dcard st-${stt}"><div class="dhead"><div>${single?`<div class="dgrp">${E(i.g)}</div>`:''}<h3 class="dtitle">${E(i.q.replace(/\s+(conferid|apresentad|recolhid)[oa]s?(?=\s*(\(|$))/i,''))}</h3></div><span class="dbadge">${DST[stt][0]} ${DST[stt][1]}</span></div><div class="dbody">${i.bloq?(bad?'<div class="warn">🛑 NÃO recolher a documentação: orientar o cidadão.</div>':'<div class="note">Se não estiver certo: orientar o cidadão e NÃO recolher a documentação.</div>'):''}${lookHtml(lk(i),1,k)}${acts}${i.link?`<a class="dlink" href="${LINK}" target="_blank" rel="noopener">Ver formulários e checklist oficiais (SES/MG)</a>`:''}</div></div>`;
+}
+function ansPc(k){const M=curM();M[k]='no';M[k+'~pc']=1;const y=scrollY;R();scrollTo(0,y)}
 function listaConf(md){
   const st=stat(md),M=st.M,tot=st.L.length,pct=tot?Math.round(100*st.ok/tot):0;let g='';
   let h=`<div class="bar"><i style="width:${pct}%"></i></div><div class="hint">${st.ok} de ${tot} conferidos${st.no.length?` • <b style="color:var(--no)">${st.no.length} com problema</b>`:''}</div>`;
   st.L.filter(i=>!i.cu).forEach(i=>{
     if(i.g!==g){g=i.g;h+=`<h2>${E(g)}</h2>`}
+    if(md!=='r'){h+=docCard(i,md,false);return}
     const a=i.auto||M[i.k],B=(v,t)=>`<button class="${a===v?'on '+v:v}" onclick="${v==='ok'&&a!=='ok'?`okAns('${i.k}')`:`ans('${i.k}',${a===v?'null':`'${v}'`})`}">${t}</button>`;
     h+=`<div class="card cfi ${a==='ok'?'cok':a==='no'?'cno':''}"><div class="q2">${E(i.q)}</div>${i.bloq&&a==='no'?'<div class="warn">🛑 NÃO recolher a documentação: orientar o cidadão.</div>':''}${i.auto||md==='g'?'':presHtml(i,md)}${lookHtml(lk(i),1,i.k)}`+
     (i.auto?`<span class="pill ${i.auto==='ok'?'p-ok':i.auto==='na'?'p-wait':'p-no'}">${i.auto==='ok'?'✅ conferido automaticamente':i.auto==='na'?'➖ não se aplica ao paciente':'❌ divergente (automático)'}</span>`:`<div class="cfb${md==='g'?' cfr':''}">${md==='g'?B('ok','✅ Consta no atendimento'):''}${B('no',md==='g'?'❌ Não veio':'❌ Falta ou errado')}${i.na?B('na','➖ Não se aplica'):''}</div>`)+
@@ -638,12 +674,12 @@ function Pconf(md){
   if(bl.length){app.innerHTML=`<h1>✋ Falta preencher antes</h1>${bl.map(b=>`<div class="warn">${E(b.m)} <button class="btn sm" onclick="go(${b.s})">Ir lá</button></div>`).join('')}`;foot.innerHTML=`<button class="btn" onclick="go(${bl[0].s})">Resolver agora</button>`;return}
   const tot=st.L.length,pct=tot?Math.round(100*st.ok/tot):0,f=st.wait.find(i=>!i.cu),auto=i=>!!i.auto;
   let h=`<h1>${g?'✅ Conferindo o que foi entregue':SA[md].h+' '+SA[md].n}</h1>${g?'':`<div class="hint">${resumoSA()}</div>`}<div class="bar"><i style="width:${pct}%"></i></div><div class="hint">${st.ok} de ${tot} conferidos${st.no.length?` • <b style="color:var(--no)">${st.no.length} com problema</b>`:''}</div>`;
-  if(f)h+=`<div class="card"><span class="pill p-wait">${E(f.g)}</span><div class="q">${E(f.q)}</div>${f.bloq?'<div class="note">Se não estiver certo: orientar o cidadão e NÃO recolher a documentação.</div>':''}${md==='g'?'':presHtml(f,md)}${lookHtml(lk(f),1,f.k)}
+  if(f&&md!=='r')h+=docCard(f,md,true);else if(f)h+=`<div class="card"><span class="pill p-wait">${E(f.g)}</span><div class="q">${E(f.q)}</div>${f.bloq?'<div class="note">Se não estiver certo: orientar o cidadão e NÃO recolher a documentação.</div>':''}${md==='g'?'':presHtml(f,md)}${lookHtml(lk(f),1,f.k)}
   ${f.k.startsWith('p:')?`<button class="btn sm ghost" onclick="allP()">✅ Todos os itens da lista constam</button> `:''}${f.link?`<a href="${LINK}" target="_blank" rel="noopener">Ver formulários e checklist oficiais (SES/MG)</a>`:''}
   ${g?`<div class="cfr cfrb"><button class="btn ok" onclick="okAns('${f.k}')">✅ Consta no atendimento</button><button class="btn no" onclick="ans('${f.k}','no')">❌ Não veio</button>${f.na?`<button class="btn na" onclick="ans('${f.k}','na')">➖ Não se aplica</button>`:''}</div>`:`<div class="big"><button class="btn no" onclick="ans('${f.k}','no')">❌ Falta ou está errado</button>${f.na?`<button class="btn na" onclick="ans('${f.k}','na')">➖ Não se aplica</button>`:''}</div>`}</div>`;
   else if(!st.no.length)h+=(!g&&st.wait.length?`<div class="note">✅ Itens padrão conferidos. Falta conferir os pontos adicionais na próxima etapa.</div>`:`<div class="good"><b>🎉 Tudo conferido!</b> ${g?'Pode gerar o Recibo Guichê.':'Pode gerar o '+SA[md].rc+'.'}</div>`);
   if(st.no.length)h+=`<h2>❌ Pendências</h2><div class="card">${st.no.map(i=>`<div class="item"><div><span class="hint">${E(i.g)}</span><br>${E(i.q)}</div>${auto(i)?'<span class="pill p-no">automático</span>':`<button class="btn sm ok" onclick="ans('${i.k}','ok')">Resolvido</button>`}</div>`).join('')}</div>${g?`<button class="btn ghost" onclick="copiaP()">📋 Copiar texto simples para o cidadão</button>`:''}`;
-  h+=`<details style="margin-top:14px"><summary class="hint" style="cursor:pointer">Ver todos os itens</summary><div class="card">${st.L.map(i=>{const a=i.auto||st.M[i.k];return`<div class="item"><div>${E(i.q)}</div><span class="pill ${a==='ok'?'p-ok':a==='no'?'p-no':'p-wait'}" ${auto(i)?'':`onclick="ans('${i.k}',${a?'null':"'ok'"})"`}>${a==='ok'?'✅':a==='no'?'❌':a==='na'?'➖':'⏳'}</span></div>`}).join('')}</div></details>`;
+  h+=`<details style="margin-top:14px"><summary class="hint" style="cursor:pointer">Ver todos os itens</summary><div class="card">${st.L.map(i=>{const a=i.auto||st.M[i.k];return`<div class="item"><div>${E(i.q)}</div><span class="pill ${a==='ok'?'p-ok':a==='no'?'p-no':'p-wait'}" ${auto(i)?'':`onclick="ans('${i.k}',${a?'null':"'ok'"})"`}>${a==='ok'?'✅':a==='no'?(st.M[i.k+'~pc']&&!i.auto?'⚠️':'❌'):a==='na'?'➖':'⏳'}</span></div>`}).join('')}</div></details>`;
   app.innerHTML=h;
   const pend=st.no.length+st.wait.length;
   foot.innerHTML=`<button class="btn ghost" style="flex:.4" onclick="go(${g?2:1})">⬅️</button><button class="btn ${pend?'ghost':'ok'}" onclick="go(${g?4:3})">${g?(pend?'Ver o Recibo Guichê':'Gerar o Recibo Guichê 🧾'):(pend?'Ver o '+SA[md].rc+' 🖨️':'Gerar o '+SA[md].rc+' 🖨️')}</button>`;
@@ -736,7 +772,7 @@ function P3u(){
   document.getElementById('print').innerHTML=pk;
   foot.innerHTML=`<button class="btn ghost" style="flex:.4" onclick="go(3)">⬅️</button><button class="btn ok" onclick="print()">🖨️ Imprimir</button><button class="btn ghost" style="flex:.6" onclick="if(confirm('Começar nova conferência?'))startSA('${md}')">Nova</button>`;
 }
-function ans(k,v){const M=S.mode==='r'?S.r:S.mode==='u'?S.u:S.a;if(v===null)delete M[k];else M[k]=v;const y=scrollY;R();scrollTo(0,y)}
+function ans(k,v){const M=S.mode==='r'?S.r:S.mode==='u'?S.u:S.a;delete M[k+'~pc'];if(v===null)delete M[k];else M[k]=v;const y=scrollY;R();scrollTo(0,y)}
 // ======================================================================
 // IMPRESSÃO – modelos oficiais (Requerimento, Termo de Adesão, Declaração Autorizadora)
 // ======================================================================
@@ -895,7 +931,7 @@ function pgTermo(){
 }
 
 // ---------------- PÁGINA 3 – CHECKLIST DO GUICHÊ ----------------
-function stTxt(i,M){const a=i.auto||M[i.k];return a==='ok'?(i.auto?'☑ Conferido':'☑ Apresentado'):a==='na'?'— Não se aplica':a==='no'?(i.auto?'☒ Divergente':'☒ Não apresentado'):'☐ A conferir'}
+function stTxt(i,M){const a=i.auto||M[i.k];return a==='ok'?(i.auto?'☑ Conferido':'☑ Apresentado'):a==='na'?'— Não se aplica':a==='no'?(i.auto?'☒ Divergente':(M[i.k+'~pc']?'◐ Consta com pendências':'☒ Não apresentado')):'☐ A conferir'}
 function pgChk(){
   const p=S.p,st=stat('g');let g='',rows='';
   const sub=(i,a,n)=>a==='na'||!lk(i).length?'':lk(i).map((x,j)=>`<tr class="vr"><td colspan=${n}>${st.M[i.k+'#'+j]?'☑':'☐'} ${E(x)}</td></tr>`).join('');
@@ -911,7 +947,7 @@ function pgPend(){
   const p=S.p,st=stat('g'),P=pendsG();
   return `<div class="sheet pd">${plogo()}<h3>LISTA DE PENDÊNCIAS</h3><div class="sub">Para o paciente ou responsável</div>${cab()}
   <p class="pin">Para o pedido seguir, entregue na <b>UAI ${E(p.uai)}</b> o que está na lista abaixo. Guarde este papel e leve junto com os documentos.</p>
-  <table class="ckt">${P.map((i,n)=>`<tr><td style="width:24px;text-align:center"><b>${n+1}</b></td><td>${E(i.s)}<div class="sm">${E((i.g||'').split(' • ')[0])}</div></td><td class="stc" style="width:100px">${i.k in st.M?'☒ Não veio':'☐ A conferir'}</td></tr>`).join('')}</table>
+  <table class="ckt">${P.map((i,n)=>`<tr><td style="width:24px;text-align:center"><b>${n+1}</b></td><td>${E(i.s)}<div class="sm">${E((i.g||'').split(' • ')[0])}</div></td><td class="stc" style="width:100px">${i.k in st.M?(st.M[i.k+'~pc']?'◐ Com pendências':'☒ Não veio'):'☐ A conferir'}</td></tr>`).join('')}</table>
   <div class="sgs"><div class="sig">ASSINATURA DO(A) ATENDENTE — ${E(p.atend)}</div><div class="sig">CIENTE: PACIENTE OU RESPONSÁVEL</div></div></div>`;
 }
 
