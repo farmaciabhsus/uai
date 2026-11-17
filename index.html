@@ -343,12 +343,24 @@ html[data-contrast=alto] header :focus-visible{outline-color:#FFD400}
 .brand .logo-wrap{margin-left:0}
 .dcard{overflow:clip}
 
+/* ===== Administração do catálogo ===== */
+.catTabs{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,calc(430px*var(--fs,1))),1fr));gap:10px;align-items:start}
+.cat-it{margin:0;padding:12px 14px}
+.cat-h{margin-bottom:6px}
+.cat-t{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}
+.cat-l{margin:6px 0 8px 20px;padding:0}.cat-l li{margin:3px 0}
+.cat-del{opacity:.65}.cat-del .cat-h b{text-decoration:line-through}
+.cat-b{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.cat-b .btn{width:auto}
+textarea{width:100%;font:inherit;padding:12px 14px;border:2px solid var(--bd2);border-radius:12px;background:#fff;color:var(--tx);resize:vertical}
+
 @media print{:root{--fs:1!important}}
 </style></head><body>
 <header><div class="brand"><span class="logo-wrap" id="logoWrap" hidden><img id="logoSUS" alt="Logomarca do Sistema Único de Saúde (SUS)"></span><svg id="brandIco" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M12 8v8M8 12h8"/></svg><div class="brand-t"><b>Sistema Único de Saúde (SUS)</b><i>Componente Especializado da Assistência Farmacêutica (CEAF)</i><i>Unidade de Atendimento Integrado (UAI)</i></div></div><div class="steps" id="steps"></div><div class="acc" role="group" aria-label="Ajustes de leitura"><button type="button" id="fsDn" onclick="fsStep(-1)" aria-label="Diminuir o tamanho da fonte" title="Diminuir a fonte (Alt + −)"><span style="font-size:15px" aria-hidden="true">A</span><span aria-hidden="true">−</span></button><button type="button" id="fsVal" onclick="fsReset()" title="Voltar ao tamanho padrão (Alt + 0)">100%</button><button type="button" id="fsUp" onclick="fsStep(1)" aria-label="Aumentar o tamanho da fonte" title="Aumentar a fonte (Alt + +)"><span style="font-size:23px" aria-hidden="true">A</span><span aria-hidden="true">+</span></button><button type="button" id="ctBtn" onclick="ctToggle()" aria-pressed="false" title="Alto contraste"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg><span class="acc-t">Contraste</span></button></div><div class="sr" id="fsLive" role="status" aria-live="polite"></div></header>
 <main id="app"></main>
 <div class="foot"><div id="foot"></div></div>
 <div id="print"></div>
+<script type="application/json" id="cat-shared">null</script>
 <script type="application/json" id="cx-shared">{"u":[],"r":[]}</script>
 <script>
 // Logomarca do SUS: cole aqui o arquivo da logomarca em formato data URI (ex.: 'data:image/png;base64,....'). Vazio = sem logomarca.
@@ -365,7 +377,7 @@ const SXD=[[/endometriose|leiomioma|ov[aá]rios polic|turner|gestantes/i,'F']];
 const SXN={F:'feminino',M:'masculino'};
 const sxDoenca=n=>{const r=SXD.find(([re])=>re.test(n||''));return r?r[1]:null};
 const sxErro=n=>{const x=sxDoenca(n),sx=S.p.sexo;return x&&sx&&x!==sx?n+' é exclusiva de pacientes do sexo '+SXN[x]+', mas o paciente foi cadastrado como sexo '+SXN[sx]:''};
-const RD=[
+const RD0=[
 {n:'Acne grave',c:['L70'],m:['isotretino'],i:[['Controle especial: receita/notificação especial não é obrigatória na abertura (recomendar prescrição comum de 90 dias); se vier anexada, fica retida e uma nova é exigida a cada dispensação',1],['Termo de Conhecimento de Risco e Consentimento Pós-Informação preenchido e assinado pelo médico (3ª via amarela)'],['Relatório médico com peso atualizado, dose cumulativa e tempo de tratamento'],['Beta-HCG negativo, validade máxima de 15 dias, em todas as dispensações mensais (mulheres de 10 a 49 anos)',0,HC],['Exames semestrais de TGO, TGP, Colesterol Total e Triglicérides (validade de 90 dias)']]},
 {n:'Amiloidoses',c:['E85'],i:[['Receita médica original (validade de 90 dias na abertura/reavaliação; 1 ano só na renovação)'],['Agendamento de retorno registrado, para controle de estoque e manutenção de saldo']]},
 {n:'Anemia DRC (Alfaepoetina)',c:['N18.0','N18.8'],m:['alfaepoetina'],i:[['Receita médica (validade de 90 dias)'],['Hemograma/Eritrograma com Hemoglobina (validade de 30 dias, prorrogável até 45 dias)']]},
@@ -431,6 +443,7 @@ const RD=[
 {n:'Uveítes',c:['H15.0','H20.1','H30'],i:[['Receita médica (validade de 90 dias na abertura/reavaliação; 1 ano só na renovação)'],['Relatório de avaliação oftalmológica detalhada']]},
 {n:'Vasculites ANCA',c:['M31.3','M31.7'],i:[['Receita médica (validade de 90 dias na abertura/reavaliação; 1 ano só na renovação)'],['Dose única de ataque (4 aplicações semanais), sem fluxo de renovação contínua',1]]}
 ];
+let RD=RD0;
 function dsp(t){const out=[],seen=new Set();RD.forEach(r=>{if(!t.cids.some(c=>r.c.some(p=>c.startsWith(p))))return;if(r.m&&!t.meds.some(m=>r.m.some(w=>nz(m).includes(w))))return;r.i.forEach(([x,na,c])=>{if(!seen.has(x)){seen.add(x);out.push({t:x,na:!!na,n:r.n,c})}})});return out}
 const MEDS=Object.keys(MC).sort((a,b)=>a.localeCompare(b,'pt'));
 const dk=s=>String(s||'').trim().toLowerCase();
@@ -740,7 +753,7 @@ function bloqueios(){
   stat('g').no.filter(i=>i.bloq&&!i.auto).forEach(i=>B.push({m:'NÃO recolher a documentação: '+i.q+' (marcado como “Não veio”)',s:0,loc:true}));
   return B;
 }
-const stat=md=>{md=md||(S.mode==='r'?'r':S.mode==='u'?'u':'g');const M=md==='r'?S.r:md==='u'?S.u:S.a,L=md==='u'?itemsU():items(md);let ok=0;const no=[],wait=[];L.forEach(i=>{const a=i.auto||M[i.k];if(a==='ok'||a==='na')ok++;else if(a==='no')no.push(i);else wait.push(i)});return{L,ok,no,wait,M}};
+const stat=md=>{md=md||(S.mode==='r'?'r':S.mode==='u'?'u':'g');const M=md==='r'?S.r:md==='u'?S.u:S.a,L=catPost(md,md==='u'?itemsU():items(md));let ok=0;const no=[],wait=[];L.forEach(i=>{const a=i.auto||M[i.k];if(a==='ok'||a==='na')ok++;else if(a==='no')no.push(i);else wait.push(i)});return{L,ok,no,wait,M}};
 // ---- telas
 const go=n=>{if((S.mode==='g'||S.mode==='u')&&n===1)n=0;S.step=n;S.cur=0;R();scrollTo(0,0)};
 const home=()=>{S.mode='home';R();scrollTo(0,0)};
@@ -759,6 +772,7 @@ function R0(){
     if(!okD)S.step=0;
     h+=(S.mode==='u'?[[0,'Dados e conferência','🧑'],[2,'Conferir','✅'],[3,'Extras','➕'],[4,SA.u.rc,'🖨️']]:['Dados','Conferência','Conferir','Extras',SA[S.mode].rc].map((x,i)=>[i,x,['🧑','🔎','✅','➕','🖨️'][i]])).map(([i,x,ic])=>`<div class="st ${S.step===i?'on':''} ${i<S.step?'done':''}" role="button" tabindex="0" ${S.step===i?'aria-current="step"':''} ${i&&!okD?'aria-disabled="true"':''} onclick="${i&&!okD?'':`go(${i})`}"><b>${ic}</b>${x}${i===2&&n&&S.t.length?` <span class="pill p-no">${n}</span>`:''}</div>`).join('')}
   steps.innerHTML=h;
+  if(S.mode==='adm')return ADM_R();
   if(S.mode==='home')return PH();
   if(S.mode==='g')return [P01,P01,Pcapa,()=>Pconf('g'),P3][S.step]();
   return [S.mode==='u'?PDU:PD,S.mode==='u'?PDU:P1u,()=>Pconf(S.mode),PX,P3u][S.step]();
@@ -1186,9 +1200,279 @@ function PH(){
   app.innerHTML=`<h1>👋 O que vamos fazer?</h1>
   <div class="big"><button class="btn" style="padding:28px" onclick="startG()">🪟 UAI - Guichê<br><small>Imprimir a Capa guichê, conferir e emitir o Recibo Guichê</small></button>
   <button class="btn ok" style="padding:28px" onclick="startSA('u')">🗂️ UAI - Retaguarda<br><small>Informar medicamento, CID, nascimento e sexo; ver o que conferir no processo e emitir o Recibo retaguarda</small></button>
-  <button class="btn ok" style="padding:28px" onclick="startSA('r')">💊 Farmácia - Conferência<br><small>Conferir documentos, formulários e regras de fornecimento</small></button></div>`;
+  <button class="btn ok" style="padding:28px" onclick="startSA('r')">💊 Farmácia - Conferência<br><small>Conferir documentos, formulários e regras de fornecimento</small></button></div>
+  <div style="margin-top:18px"><button class="btn ghost sm" style="width:auto" onclick="admOpen()">⚙️ Administrar catálogo (senha)</button></div>`;
   foot.innerHTML='';
 }
+// ===================== CATÁLOGO ADMINISTRÁVEL (protegido por senha) =====================
+// Camada de edição sobre as regras do sistema: o código continua gerando os itens, e o catálogo (dados) altera,
+// exclui ou acrescenta documentos, formulários, regras e informações. Fica salvo neste navegador (localStorage)
+// e pode ser gravado dentro do HTML ("Salvar HTML com o catálogo") para valer para todos os usuários.
+const CATK='ceaf_catalogo_v1',INFO0=Object.assign({},INFO);
+const catNorm=c=>{c=c||{};const r=c.rd||{};return{v:1,ts:c.ts||0,pw:c.pw||null,ov:c.ov||{},novos:c.novos||[],rd:{ed:r.ed||{},del:r.del||[],add:r.add||[]},info:c.info||{}}};
+const CATSH=(()=>{try{const o=JSON.parse(document.getElementById('cat-shared').textContent);return o&&o.v===1?o:null}catch(e){return null}})();
+let CAT=(()=>{let l=null;try{l=JSON.parse(localStorage.getItem(CATK)||'null')}catch(e){}
+  const c=[l,CATSH].filter(x=>x&&x.v===1).sort((a,b)=>(b.ts||0)-(a.ts||0))[0];return catNorm(c)})();
+let CAT_RAW=false,CAT_BASE=null,ADMOK=false;
+const catKb=k=>String(k).replace(/^t\d+:/,'').replace(/^(rem|au|ai|age|part|ctl|tcr|hcg|sigc)\d+$/,'$1');
+const CATDYN=/^(rem|au|ai|age|part|ctl|tcr|hcg|sigc)$/;
+const catGn=g=>String(g||'').replace(/^\d+\.\s*/,'');
+const catRid=(n,x)=>hq(n+'|'+x);
+const CATLBL={rem:'[Medicamento]: consta na REMEMG como medicamento do CEAF',au:'[Medicamento]: CID contemplado e confere com a doença',ai:'Idade do paciente dentro da regra do medicamento',age:'Conferir a idade do paciente (regra do medicamento)',part:'[Medicamento]: particularidades do medicamento',ctl:'Controle especial ([medicamento]): receita/notificação especial não é obrigatória na abertura',tcr:'Termo de Conhecimento de Risco de [medicamento] assinado pelo paciente e pelo médico',hcg:'B-HCG (mulher de 10 a 49 anos, validade 15 dias) para [medicamento]',sigc:'SIGAF: forma de cadastro e unidade de [medicamento] conferidas (Manual, itens 5.1 e 5.2)',cid:'CID do LME é igual ao CID do processo ([CID]) e à doença',via:'Encaminhamento à Farmácia de Minas ([tipo de via]): tramitado pelo SEI e sinalizado no Teams',sx:'Doença exclusiva de um sexo confere com o sexo do paciente'};
+const catCnt=(a,b)=>{let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;return i};
+const catCntS=(a,b)=>{let i=0;while(i<a.length&&i<b.length&&a[a.length-1-i]===b[b.length-1-i])i++;return i};
+
+// ---- aplica o catálogo sobre os itens gerados pelo código (chamado por stat())
+function catPost(md,L){
+  if(CAT_RAW)return L;
+  const out=[];
+  L.forEach(i=>{
+    if(/^(p:|x:)/.test(i.k)){out.push(i);return}
+    const kb=catKb(i.k),o=CAT.ov[md+'|'+kb];
+    if(!o){out.push(i);return}
+    if(o.del)return;
+    const j=Object.assign({},i);
+    if(o.q!=null&&!CATDYN.test(kb))j.q=o.q;
+    if(o.look){j.look=o.look.slice();delete j.hint}
+    if(o.s!=null)j.s=o.s;
+    if(o.na!=null&&!i.auto)j.na=!!o.na;
+    out.push(j)});
+  const ds=new Set(S.t.map(t=>dk(t.doenca)).filter(Boolean));
+  CAT.novos.filter(x=>x.fx.includes(md)&&(x.esc==='*'||ds.has(dk(x.esc)))).forEach(x=>{
+    const g=x.g||'Documentos adicionais',it={k:'c:'+x.id,g,q:x.q,na:!x.obr,look:x.look.slice(),s:x.s||('Falta ou está incorreto: '+x.q+'.')};
+    let at=-1;out.forEach((y,n)=>{if(catGn(y.g)===g&&!/^x:/.test(y.k))at=n});
+    if(at<0){at=out.findIndex(y=>/^x:/.test(y.k));if(at<0)at=out.length;out.splice(at,0,it)}else out.splice(at+1,0,it)});
+  return out}
+
+// ---- reconstrói RD (documentos por doença) e INFO (informações dos medicamentos) a partir do catálogo
+function catRebuild(){
+  const ed=CAT.rd.ed,del=new Set(CAT.rd.del);
+  const rows=RD0.map(r=>({n:r.n,c:r.c,m:r.m,i:r.i.filter(it=>!del.has(catRid(r.n,it[0]))).map(it=>{const e=ed[catRid(r.n,it[0])];return e?[e.t?e.t:it[0],e.na!=null?(e.na?1:0):it[1],it[2]]:it})}));
+  CAT.rd.add.forEach(a=>{let r=rows.find(x=>x.n===a.n);if(!r){const d=dis(a.n);r={n:a.n,c:d?d.cids.slice():[],i:[]};rows.push(r)}r.i.push([a.t,a.na?1:0])});
+  RD=rows;
+  Object.keys(INFO).forEach(k=>delete INFO[k]);Object.assign(INFO,INFO0);
+  Object.keys(CAT.info).forEach(k=>{if(CAT.info[k]!=null)INFO[k]=CAT.info[k]})}
+function catSave(){CAT.ts=Date.now();try{localStorage.setItem(CATK,JSON.stringify(CAT))}catch(e){alert('Não foi possível gravar o catálogo neste navegador.')}catRebuild()}
+catRebuild();
+
+// ---- catálogo padrão (do código): enumera os itens gerados em vários cenários
+function catBase(){
+  if(CAT_BASE)return CAT_BASE;
+  const bak=S,infoNow=Object.assign({},INFO),rdNow=RD,acc={g:new Map(),u:new Map(),r:new Map()};
+  CAT_RAW=true;Object.keys(INFO).forEach(k=>delete INFO[k]);Object.assign(INFO,INFO0);RD=RD0;
+  const add=(md,i)=>{
+    if(/^(p:|x:|c:)/.test(i.k)||/^Específico da doença \(/.test(i.q))return;
+    const kb=catKb(i.k),m=acc[md],lj=JSON.stringify(lk(i)),pt=/^t\d+:/.test(i.k);let e=m.get(kb);
+    if(!e){m.set(kb,{md,k:kb,pt,g:pt?'Por tratamento (doença e medicamento)':catGn(i.g),q:i.q,pre:i.q.length,suf:i.q.length,na:!!i.na,auto:!!i.auto,int:!!i.int,bloq:!!i.bloq,look:lk(i).slice(),s:i.s||'',dynQ:CATDYN.test(kb),dynL:false,L:new Set([lj])});return}
+    if(e.q!==i.q){if(e.pt)e.dynQ=true;e.pre=Math.min(e.pre,catCnt(e.q,i.q));e.suf=Math.min(e.suf,catCntS(e.q,i.q))}
+    if(!e.L.has(lj)){e.L.add(lj);e.dynL=true}};
+  const run=(md,over)=>{const s=JSON.parse(JSON.stringify(bak));s.mode=md;s.a={};s.u={};s.r={};
+    Object.assign(s.p,{tipo:'Novo',resid:'Belo Horizonte',nasc:'1990-01-01',sexo:'F'},over.p||{});s.t=over.t||[];S=s;
+    try{stat(md).L.forEach(i=>add(md,i))}catch(e){}};
+  try{
+    ['g','u','r'].forEach(md=>{
+      run(md,{});['Complementação','Reavaliação'].forEach(tp=>run(md,{p:{tipo:tp}}));
+      run(md,{p:{resid:OUTRA}});run(md,{p:{resid:MDESC[0]}});
+      MEDS.forEach(m=>MC[m].forEach(e=>run(md,{t:[{doenca:e[0],cids:[e[2][0]],meds:[m]}]})))})
+  }finally{S=bak;CAT_RAW=false;Object.keys(INFO).forEach(k=>delete INFO[k]);Object.assign(INFO,infoNow);RD=rdNow}
+  CAT_BASE={};
+  ['g','u','r'].forEach(md=>{CAT_BASE[md]=[...acc[md].values()].map(e=>{
+    if(CATLBL[e.k])e.q=CATLBL[e.k];
+    delete e.L;return e})});
+  return CAT_BASE}
+
+// ---- hash de senha (SHA-256 em JS puro, com sal e repetições)
+function sha256(str){
+  const b=new TextEncoder().encode(str),l=b.length,n=((l+9+63)>>6)<<6,w=new Uint8Array(n);w.set(b);w[l]=128;
+  const dv=new DataView(w.buffer);dv.setUint32(n-4,(l*8)>>>0);dv.setUint32(n-8,Math.floor(l*8/4294967296));
+  const K=[],H=[];for(let c=2,i=0;i<64;c++){let p=1;for(let d=2;d*d<=c;d++)if(c%d===0){p=0;break}if(p){if(i<8)H[i]=Math.floor((Math.sqrt(c)%1)*4294967296)|0;K[i++]=Math.floor((Math.cbrt(c)%1)*4294967296)|0}}
+  const W=new Int32Array(64),rr=(x,k)=>(x>>>k)|(x<<(32-k));
+  for(let o=0;o<n;o+=64){
+    for(let i=0;i<16;i++)W[i]=dv.getInt32(o+i*4);
+    for(let i=16;i<64;i++){const a=W[i-15],c=W[i-2];W[i]=(W[i-16]+(rr(a,7)^rr(a,18)^(a>>>3))+W[i-7]+(rr(c,17)^rr(c,19)^(c>>>10)))|0}
+    let[a,b2,c,d,e,f,g,h]=H;
+    for(let i=0;i<64;i++){const t1=(h+(rr(e,6)^rr(e,11)^rr(e,25))+((e&f)^(~e&g))+K[i]+W[i])|0,t2=((rr(a,2)^rr(a,13)^rr(a,22))+((a&b2)^(a&c)^(b2&c)))|0;h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b2;b2=a;a=(t1+t2)|0}
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+b2)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0}
+  return H.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('')}
+const catPw=(p,s)=>{s=s||uid()+uid();let h=s+':'+p;for(let i=0;i<3000;i++)h=sha256(h+s);return{s,h}};
+
+// ---- exportação em Excel (.xlsx gerado aqui mesmo, sem bibliotecas)
+const CRCT=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=u=>{let c=-1;for(let i=0;i<u.length;i++)c=CRCT[(c^u[i])&255]^(c>>>8);return(c^-1)>>>0};
+function zipStore(files){
+  const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+  const u16=v=>[v&255,(v>>8)&255],u32=v=>[v&255,(v>>8)&255,(v>>16)&255,(v>>>24)&255];
+  files.forEach(f=>{const nm=enc.encode(f.name),d=enc.encode(f.text),crc=crc32(d);
+    const lh=new Uint8Array([0x50,0x4b,3,4,...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(33),...u32(crc),...u32(d.length),...u32(d.length),...u16(nm.length),...u16(0)]);
+    parts.push(lh,nm,d);
+    cd.push(new Uint8Array([0x50,0x4b,1,2,...u16(20),...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(33),...u32(crc),...u32(d.length),...u32(d.length),...u16(nm.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(off)]),nm);
+    off+=lh.length+nm.length+d.length});
+  const sz=cd.reduce((a,x)=>a+x.length,0);
+  const end=new Uint8Array([0x50,0x4b,5,6,0,0,0,0,...u16(files.length),...u16(files.length),...u32(sz),...u32(off),0,0]);
+  return new Blob([...parts,...cd,end],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})}
+function xlsxBlob(sheets){
+  const X=s=>String(s==null?'':s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+  const col=i=>{let s='';i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26)}return s};
+  const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n',NS='xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"',RN='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  const files=[];
+  files.push({name:'[Content_Types].xml',text:H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+sheets.map((s,i)=>'<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join('')+'</Types>'});
+  files.push({name:'_rels/.rels',text:H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="'+RN+'/officeDocument" Target="xl/workbook.xml"/></Relationships>'});
+  files.push({name:'xl/workbook.xml',text:H+'<workbook '+NS+' xmlns:r="'+RN+'"><sheets>'+sheets.map((s,i)=>'<sheet name="'+X(s.name)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>').join('')+'</sheets></workbook>'});
+  files.push({name:'xl/_rels/workbook.xml.rels',text:H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((s,i)=>'<Relationship Id="rId'+(i+1)+'" Type="'+RN+'/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>').join('')+'<Relationship Id="rId'+(sheets.length+1)+'" Type="'+RN+'/styles" Target="styles.xml"/></Relationships>'});
+  files.push({name:'xl/styles.xml',text:H+'<styleSheet '+NS+'><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF005BAB"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFBFC9D3"/></left><right style="thin"><color rgb="FFBFC9D3"/></right><top style="thin"><color rgb="FFBFC9D3"/></top><bottom style="thin"><color rgb="FFBFC9D3"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'});
+  sheets.forEach((s,si)=>{
+    const nc=s.rows[0].length,rows=s.rows.map((r,ri)=>'<row r="'+(ri+1)+'">'+r.map((v,ci)=>'<c r="'+col(ci)+(ri+1)+'" s="'+(ri?2:1)+'" t="inlineStr"><is><t xml:space="preserve">'+X(v)+'</t></is></c>').join('')+'</row>').join('');
+    files.push({name:'xl/worksheets/sheet'+(si+1)+'.xml',text:H+'<worksheet '+NS+'><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols>'+s.w.map((w,i)=>'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>').join('')+'</cols><sheetData>'+rows+'</sheetData><autoFilter ref="A1:'+col(nc-1)+s.rows.length+'"/></worksheet>'})});
+  return zipStore(files)}
+
+// ---- dados da planilha
+const catFx={g:'Guichê',u:'Retaguarda',r:'Farmácia'};
+const catObr=o=>o.auto?'Automático (conferido pelo sistema)':o.na?'Se aplicável':'Obrigatório';
+function catEffItem(e){const o=CAT.ov[e.md+'|'+e.k]||{};return{o,del:!!o.del,q:o.q!=null&&!e.dynQ?o.q:e.q,look:o.look||e.look,s:o.s!=null?o.s:e.s,na:o.na!=null&&!e.auto?!!o.na:e.na,auto:e.auto,int:e.int,alt:Object.keys(o).filter(x=>x!=='del').length>0}}
+function catSheets(){
+  const s1=[['Documento ou formulário','Regra de verificação','Informação vinculada','Fluxo','Grupo','Obrigatoriedade','Origem']];
+  const put=(md,g,q,look,s,ob,org)=>{(look.length?look:['']).forEach(r=>s1.push([q,r,s,catFx[md],g,ob,org]))};
+  ['g','u','r'].forEach(md=>{
+    catBase()[md].forEach(e=>{const x=catEffItem(e);if(x.del)return;put(md,e.g,x.q+(e.dynQ?' (varia conforme o paciente)':''),x.look,x.s,catObr(x)+(x.int?' · verificação interna da equipe':''),x.alt?'Alterado':'Padrão')});
+    CAT.novos.filter(x=>x.fx.includes(md)).forEach(x=>put(md,x.g||'Documentos adicionais',x.q+(x.esc!=='*'?' [apenas: '+x.esc+']':''),x.look,x.s,x.obr?'Obrigatório':'Se aplicável','Incluído'))});
+  const s2=[['Doença','CIDs','Documento, exame ou formulário','Regra (validade ou condição)','Medicamentos (filtro)','Condição automática','Obrigatoriedade','Origem']];
+  const sp=x=>{const m=String(x).match(/^(.*?)\s*\(([^()]*)\)\s*\.?$/);return m&&m[1].trim()?[m[1].trim(),m[2].trim()]:[x,'']};
+  const cnd=c=>c?[c.sx?'sexo '+(c.sx==='F'?'feminino':'masculino'):'',c.min!=null||c.max!=null?'idade '+(c.min!=null?'a partir de '+c.min:'')+(c.max!=null?' até '+(c.max-1):''):''].filter(Boolean).join('; '):'';
+  const added=new Set(CAT.rd.add.map(a=>a.n+'|'+a.t));
+  RD.forEach(r=>r.i.forEach(([x,na,c])=>{const [d,rg]=sp(x),org=added.has(r.n+'|'+x)?'Incluído':(RD0.some(z=>z.n===r.n&&z.i.some(y=>y[0]===x))?'Padrão':'Alterado');
+    s2.push([r.n,(r.c||[]).join(', '),d,rg,r.m?r.m.join(', '):'',cnd(c),na?'Se aplicável':'Obrigatório',org])}));
+  const s3=[['Medicamento','Doença','CIDs','Regra de idade','Informação vinculada','Origem']];
+  MEDS.forEach(m=>MC[m].forEach(e=>s3.push([m,e[0],e[2].join(', '),e[1]||'',INFO[m]||'',CAT.info[m]!=null?'Alterado':'Padrão'])));
+  return[{name:'Documentos e regras',rows:s1,w:[48,70,60,13,32,26,11]},{name:'Documentos por doença',rows:s2,w:[34,22,50,46,22,22,16,11]},{name:'Informações medicamentos',rows:s3,w:[48,34,26,26,80,11]}]}
+function catDownload(blob,nome){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+function catExportXlsx(){try{catDownload(xlsxBlob(catSheets()),'UAI-CEAF_catalogo_'+iso+'.xlsx')}catch(e){alert('Não foi possível gerar a planilha: '+e.message)}}
+function catExportHtml(){
+  const d=document.documentElement.cloneNode(true);
+  ['app','steps','foot','print'].forEach(id=>{const e=d.querySelector('#'+id);if(e)e.innerHTML=''});
+  d.removeAttribute('style');d.removeAttribute('data-contrast');d.classList.remove('fs-big');
+  const e=d.querySelector('#cat-shared');if(!e){alert('Não encontrei o bloco do catálogo neste HTML.');return}
+  e.textContent=JSON.stringify(CAT).replace(/</g,'\\u003c');
+  catDownload(new Blob(['<!DOCTYPE html>\n'+d.outerHTML],{type:'text/html'}),'UAI-CEAF.html');
+  alert('HTML gerado com o catálogo atual. Substitua o arquivo publicado por ele: todos os usuários passarão a ver estas regras. A senha de administrador acompanha o arquivo.')}
+
+// ---- telas do administrador
+const CATUI={tab:'doc',md:'u',q:'',ed:null,dz:0,dq:'',med:'',mq:''};
+function admOpen(){S.mode='adm';S.step=0;R();scrollTo(0,0)}
+function admOut(){ADMOK=false;CATUI.ed=null;home()}
+function admGate(){
+  const nv=!CAT.pw;
+  app.innerHTML=`<h1>🔒 Administração do catálogo</h1><div class="hint">${nv?'Primeiro acesso: crie a senha de administrador. Ela será pedida sempre que alguém quiser alterar documentos, formulários e regras.':'Informe a senha de administrador para alterar documentos, formulários e regras de verificação.'}</div>
+  <div class="card" style="max-width:560px"><label>${nv?'Nova senha (mínimo 6 caracteres)':'Senha'}</label><input id="admp" type="password" autocomplete="${nv?'new-password':'current-password'}" onkeydown="if(event.key==='Enter')admEnter()">${nv?'<label>Repita a senha</label><input id="admp2" type="password" autocomplete="new-password" onkeydown="if(event.key===\'Enter\')admEnter()">':''}<button class="btn" style="margin-top:14px" onclick="admEnter()">${nv?'Criar senha e entrar':'Entrar'}</button></div>`;
+  foot.innerHTML=`<button class="btn ghost" onclick="home()">⬅️ Voltar ao início</button>`;
+  setTimeout(()=>{const e=document.getElementById('admp');if(e)e.focus()},50)}
+function admEnter(){
+  const p=document.getElementById('admp').value;
+  if(!CAT.pw){const p2=document.getElementById('admp2').value;if(p.length<6){alert('Use pelo menos 6 caracteres.');return}if(p!==p2){alert('As senhas não conferem.');return}CAT.pw=catPw(p);catSave();ADMOK=true;ADM_R();return}
+  if(catPw(p,CAT.pw.s).h===CAT.pw.h){ADMOK=true;ADM_R()}else{alert('Senha incorreta.');document.getElementById('admp').value=''}}
+const catTag=(t,c)=>`<span class="pill ${c||'p-wait'}">${t}</span>`;
+function ADM_R(){
+  if(S.mode!=='adm')return;
+  if(!ADMOK)return admGate();
+  const T=[['doc','📄 Documentos e regras'],['dz','🩺 Documentos por doença'],['med','💊 Medicamentos'],['exp','📤 Exportar e salvar']];
+  let h=`<h1>⚙️ Catálogo de verificação</h1><div class="hint">As alterações valem neste navegador. Para valerem para todos, use “Salvar HTML com o catálogo”.</div><div class="catTabs" role="tablist">${T.map(([k,x])=>`<span class="chip ${CATUI.tab===k?'on':''}" role="tab" tabindex="0" aria-selected="${CATUI.tab===k}" onclick="CATUI.tab='${k}';CATUI.ed=null;ADM_R()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">${x}</span>`).join('')}</div>`;
+  h+=CATUI.tab==='doc'?catTabDoc():CATUI.tab==='dz'?catTabDz():CATUI.tab==='med'?catTabMed():catTabExp();
+  app.innerHTML=h;
+  foot.innerHTML=`<button class="btn ghost" style="flex:.4" onclick="admOut()">🔒 Sair</button><button class="btn" onclick="home()">🏠 Voltar ao início</button>`}
+const catLook=l=>l.length?`<ul class="cat-l">${l.map(x=>`<li>${E(x)}</li>`).join('')}</ul>`:'<div class="hint">Sem regras cadastradas.</div>';
+function catTabDoc(){
+  if(CATUI.ed&&/^[bcn]$/.test(CATUI.ed.t))return catForm();
+  const md=CATUI.md,q=nz(CATUI.q);
+  let h=`<div>${['g','u','r'].map(k=>`<span class="chip ${md===k?'on':''}" onclick="CATUI.md='${k}';CATUI.q='';ADM_R()">${catFx[k]}</span>`).join('')}</div>
+  <div class="frow" style="margin-top:8px"><div><label>Buscar documento, regra ou grupo</label><input value="${E(CATUI.q)}" onchange="CATUI.q=this.value;ADM_R()" placeholder="Digite e tecle Enter"></div><div><button class="btn" onclick="catNew()">➕ Incluir documento ou formulário</button></div></div>`;
+  const B=catBase()[md].filter(e=>!q||nz(e.g+' '+e.q+' '+e.look.join(' ')).includes(q));
+  const G=new Map();B.forEach(e=>{if(!G.has(e.g))G.set(e.g,[]);G.get(e.g).push(e)});
+  G.forEach((arr,g)=>{h+=`<h2>${E(g)}</h2><div class="cat-grid">`+arr.map(e=>{const x=catEffItem(e);
+    return `<div class="card cat-it ${x.del?'cat-del':''}"><div class="cat-h"><b>${E(x.q)}</b></div><div class="cat-t">${x.del?catTag('Excluído','p-no'):''}${catTag(catObr(x),x.auto?'p-wait':x.na?'p-wait':'p-ok')}${x.int?catTag('Equipe'):''}${x.alt?catTag('Alterado','p-pc'):catTag('Padrão')}${e.dynQ?catTag('título varia por paciente'):''}${e.dynL?catTag('regras variam por paciente'):''}</div>${catLook(x.look)}${x.s?`<div class="hint"><b>Orientação ao cidadão:</b> ${E(x.s)}</div>`:''}
+      <div class="cat-b">${x.del?`<button class="btn sm ghost" onclick="catRestore('${md}','${E(e.k)}')">↩️ Restaurar</button>`:`<button class="btn sm" onclick="catEd('b','${md}','${E(e.k)}')">✏️ Editar</button><button class="btn sm no" onclick="catDel('${md}','${E(e.k)}')">🗑️ Excluir</button>${x.alt?`<button class="btn sm ghost" onclick="catRestore('${md}','${E(e.k)}')">↩️ Voltar ao padrão</button>`:''}`}</div></div>`}).join('')+'</div>'});
+  const N=CAT.novos.filter(x=>x.fx.includes(md)&&(!q||nz(x.q+' '+x.look.join(' ')).includes(q)));
+  if(N.length)h+=`<h2>➕ Incluídos por você</h2><div class="cat-grid">`+N.map(x=>`<div class="card cat-it"><div class="cat-h"><b>${E(x.q)}</b></div><div class="cat-t">${catTag(x.obr?'Obrigatório':'Se aplicável',x.obr?'p-ok':'p-wait')}${catTag('Incluído','p-pc')}${catTag('Grupo: '+E(x.g||'Documentos adicionais'))}${x.esc!=='*'?catTag('Só para: '+E(x.esc)):''}${x.fx.length>1?catTag('Em: '+x.fx.map(f=>catFx[f]).join(', ')):''}</div>${catLook(x.look)}${x.s?`<div class="hint"><b>Orientação ao cidadão:</b> ${E(x.s)}</div>`:''}<div class="cat-b"><button class="btn sm" onclick="catEd('c','${md}','${x.id}')">✏️ Editar</button><button class="btn sm no" onclick="catDelNovo('${x.id}')">🗑️ Excluir</button></div></div>`).join('')+'</div>';
+  if(!B.length&&!N.length)h+='<div class="note">Nada encontrado.</div>';
+  return h}
+function catNew(){CATUI.ed={t:'n',md:CATUI.md};ADM_R();scrollTo(0,0)}
+function catEd(t,md,k){CATUI.ed={t,md,k};ADM_R();scrollTo(0,0)}
+function catDel(md,k){if(!confirm('Excluir este item do catálogo de '+catFx[md]+'? Ele deixa de aparecer nas conferências (você pode restaurá-lo depois).'))return;const o=CAT.ov[md+'|'+k]||{};o.del=true;CAT.ov[md+'|'+k]=o;catSave();ADM_R()}
+function catRestore(md,k){delete CAT.ov[md+'|'+k];catSave();ADM_R()}
+function catDelNovo(id){if(!confirm('Excluir definitivamente este documento incluído?'))return;CAT.novos=CAT.novos.filter(x=>x.id!==id);catSave();ADM_R()}
+function catForm(){
+  const ed=CATUI.ed,nv=ed.t==='n',b=ed.t==='b',e=b?catBase()[ed.md].find(x=>x.k===ed.k):null,c=ed.t==='c'?CAT.novos.find(x=>x.id===ed.k):null;
+  if(!nv&&!e&&!c){CATUI.ed=null;return catTabDoc()}
+  const x=b?catEffItem(e):null,q=b?x.q:c?c.q:'',look=b?x.look:c?c.look:[],s=b?x.s:c?c.s||'':'',obr=b?(x.auto?'auto':x.na?'0':'1'):c?(c.obr?'1':'0'):'1';
+  const grp=[...new Set(['g','u','r'].flatMap(m=>catBase()[m].map(y=>y.g)).concat(CAT.novos.map(y=>y.g).filter(Boolean)))].sort((a,b)=>a.localeCompare(b,'pt'));
+  const fxs=nv?[ed.md]:c?c.fx:[];
+  let h=`<h2>${nv?'➕ Incluir documento ou formulário':b?'✏️ Editar: '+E(e.q):'✏️ Editar documento incluído'}</h2><div class="card">`;
+  h+=`<label>Documento ou formulário (título)</label><input id="cf_q" value="${E(q)}" ${b&&e.dynQ?'disabled':''} placeholder="Ex.: Laudo de exame de imagem">${b&&e.dynQ?'<div class="hint">O título muda conforme o paciente (doença, medicamento ou CID) e não pode ser alterado aqui; as regras e a orientação podem.</div>':''}`;
+  if(!(b&&x.auto))h+=`<label>Obrigatoriedade</label><select id="cf_obr"><option value="1" ${obr==='1'?'selected':''}>Obrigatório (precisa estar presente)</option><option value="0" ${obr==='0'?'selected':''}>Se aplicável (permite “Não se aplica”)</option></select>`;
+  if(!b){h+=`<label>Em quais fluxos aparece</label><div>${['g','u','r'].map(f=>`<label class="vlab"><input type="checkbox" id="cf_fx${f}" ${fxs.includes(f)?'checked':''}> ${catFx[f]}</label>`).join('')}</div>
+    <div class="frow"><div><label>Grupo (onde aparece na conferência)</label><input id="cf_g" list="cf_gl" value="${E(c?c.g||'':'')}" placeholder="Ex.: Documentos do paciente"><datalist id="cf_gl">${grp.map(g=>`<option value="${E(g)}">`).join('')}</datalist></div>
+    <div><label>Vale para</label><select id="cf_esc"><option value="*">Todos os processos</option>${DD.map(d=>`<option value="${E(d.n)}" ${c&&c.esc===d.n?'selected':''}>Somente a doença: ${E(d.n)}</option>`).join('')}</select></div></div>`}
+  if(b&&e.dynL)h+='<div class="note">As regras deste item variam conforme o paciente (local, idade, medicamento). Se você alterar a lista, ela passa a ser fixa para todos os pacientes.</div>';
+  h+=`<label>Regras de verificação (uma por linha)</label><textarea id="cf_look" rows="9">${E(look.join('\n'))}</textarea>
+  <label>Orientação ao cidadão (texto da pendência)</label><textarea id="cf_s" rows="3" placeholder="O que o cidadão precisa trazer ou corrigir">${E(s)}</textarea>
+  <div class="cat-b" style="margin-top:12px"><button class="btn" onclick="catSaveForm()">💾 Salvar</button><button class="btn ghost" onclick="CATUI.ed=null;ADM_R()">Cancelar</button></div></div>`;
+  return h}
+function catSaveForm(){
+  const ed=CATUI.ed,v=id=>document.getElementById(id),look=v('cf_look').value.split('\n').map(cxEsc).filter(Boolean),s=cxEsc(v('cf_s').value),q=cxEsc(v('cf_q').value),obrEl=v('cf_obr'),obr=obrEl?obrEl.value==='1':null;
+  if(ed.t==='b'){const e=catBase()[ed.md].find(x=>x.k===ed.k),o=CAT.ov[ed.md+'|'+e.k]||{};delete o.del;
+    ['q','look','s','na'].forEach(f=>delete o[f]);
+    if(!e.dynQ&&q&&q!==e.q)o.q=q;if(JSON.stringify(look)!==JSON.stringify(e.look))o.look=look;if(s!==e.s)o.s=s;if(obr!==null&&obr===e.na)o.na=!obr;
+    if(Object.keys(o).length)CAT.ov[ed.md+'|'+e.k]=o;else delete CAT.ov[ed.md+'|'+e.k]}
+  else{const fx=['g','u','r'].filter(f=>v('cf_fx'+f).checked);
+    if(!q){alert('Informe o título do documento ou formulário.');return}if(!fx.length){alert('Marque ao menos um fluxo.');return}
+    const d={id:ed.t==='c'?ed.k:uid(),fx,g:cxEsc(v('cf_g').value),q,obr:obr!==false,esc:v('cf_esc').value,look,s};
+    if(ed.t==='c')CAT.novos=CAT.novos.map(x=>x.id===d.id?d:x);else CAT.novos.push(d)}
+  CATUI.ed=null;catSave();ADM_R();scrollTo(0,0)}
+
+// ---- documentos específicos por doença (tabela RD)
+const catDzNames=()=>[...new Set(RD0.map(r=>r.n).concat(DD.map(d=>d.n)))].sort((a,b)=>a.localeCompare(b,'pt'));
+function catTabDz(){
+  const N=catDzNames(),n=N[CATUI.dz]||N[0];
+  if(CATUI.ed&&/^dz/.test(CATUI.ed.t)){const ed=CATUI.ed,cur=ed.t==='dz'?(catDzItem(n,ed.rid)||{}):ed.t==='dza'?CAT.rd.add.find(a=>a.id===ed.rid)||{}:{};
+    return `<h2>${ed.t==='dzn'?'➕ Incluir documento, exame ou formulário':'✏️ Editar'} — ${E(n)}</h2><div class="card"><label>Documento e regra (ex.: Hemograma (validade de 30 dias))</label><textarea id="dz_t" rows="3">${E(cur.t||'')}</textarea><label>Obrigatoriedade</label><select id="dz_na"><option value="0" ${!cur.na?'selected':''}>Obrigatório</option><option value="1" ${cur.na?'selected':''}>Se aplicável</option></select><div class="cat-b" style="margin-top:12px"><button class="btn" onclick="catDzSave()">💾 Salvar</button><button class="btn ghost" onclick="CATUI.ed=null;ADM_R()">Cancelar</button></div></div>`}
+  const rows=RD0.filter(r=>r.n===n),d=dis(n);
+  let h=`<div class="frow"><div><label>Doença / condição</label><select onchange="CATUI.dz=+this.value;ADM_R()">${N.map((x,i)=>`<option value="${i}" ${x===n?'selected':''}>${E(x)}</option>`).join('')}</select></div><div><button class="btn" onclick="CATUI.ed={t:'dzn'};ADM_R()">➕ Incluir documento, exame ou formulário</button></div></div>`;
+  h+=`<div class="hint">${rows.length?rows.map(r=>'CIDs: '+r.c.join(', ')+(r.m?' • medicamentos com: '+r.m.join(', '):'')).join('<br>'):'Sem documentos específicos cadastrados para esta doença.'}${d?(rows.length?'<br>':'')+'CIDs do cadastro de medicamentos: '+d.cids.join(', '):''}</div><div class="cat-grid">`;
+  rows.forEach(r=>r.i.forEach(([t,na])=>{const id=catRid(r.n,t),del=CAT.rd.del.includes(id),ed=CAT.rd.ed[id],tx=ed&&ed.t?ed.t:t,nx=ed&&ed.na!=null?ed.na:!!na;
+    h+=`<div class="card cat-it ${del?'cat-del':''}"><div class="cat-h"><b>${E(tx)}</b></div><div class="cat-t">${del?catTag('Excluído','p-no'):''}${catTag(nx?'Se aplicável':'Obrigatório',nx?'p-wait':'p-ok')}${ed?catTag('Alterado','p-pc'):catTag('Padrão')}</div><div class="cat-b">${del?`<button class="btn sm ghost" onclick="catDzRestore('${id}')">↩️ Restaurar</button>`:`<button class="btn sm" onclick="CATUI.ed={t:'dz',rid:'${id}'};ADM_R()">✏️ Editar</button><button class="btn sm no" onclick="catDzDel('${id}')">🗑️ Excluir</button>${ed?`<button class="btn sm ghost" onclick="catDzRestore('${id}')">↩️ Voltar ao padrão</button>`:''}`}</div></div>`}));
+  CAT.rd.add.filter(a=>a.n===n).forEach(a=>{h+=`<div class="card cat-it"><div class="cat-h"><b>${E(a.t)}</b></div><div class="cat-t">${catTag(a.na?'Se aplicável':'Obrigatório',a.na?'p-wait':'p-ok')}${catTag('Incluído','p-pc')}</div><div class="cat-b"><button class="btn sm" onclick="CATUI.ed={t:'dza',rid:'${a.id}'};ADM_R()">✏️ Editar</button><button class="btn sm no" onclick="catDzDelA('${a.id}')">🗑️ Excluir</button></div></div>`});
+  return h+'</div>'}
+function catDzItem(n,rid){for(const r of RD0.filter(r=>r.n===n))for(const it of r.i)if(catRid(r.n,it[0])===rid){const e=CAT.rd.ed[rid];return{t:e&&e.t?e.t:it[0],na:e&&e.na!=null?e.na:!!it[1],base:it[0],bna:!!it[1]}}return null}
+function catDzSave(){
+  const N=catDzNames(),n=N[CATUI.dz]||N[0],ed=CATUI.ed,t=cxEsc(document.getElementById('dz_t').value),na=document.getElementById('dz_na').value==='1';
+  if(!t){alert('Escreva o documento e a regra.');return}
+  if(ed.t==='dzn')CAT.rd.add.push({id:uid(),n,t,na});
+  else if(ed.t==='dza')CAT.rd.add=CAT.rd.add.map(a=>a.id===ed.rid?{id:a.id,n:a.n,t,na}:a);
+  else{const it=catDzItem(n,ed.rid),o={};if(t!==it.base)o.t=t;if(na!==it.bna)o.na=na;if(Object.keys(o).length)CAT.rd.ed[ed.rid]=o;else delete CAT.rd.ed[ed.rid]}
+  CATUI.ed=null;catSave();ADM_R();scrollTo(0,0)}
+function catDzDel(id){if(!confirm('Excluir este documento da doença? Você pode restaurá-lo depois.'))return;if(!CAT.rd.del.includes(id))CAT.rd.del.push(id);catSave();ADM_R()}
+function catDzRestore(id){CAT.rd.del=CAT.rd.del.filter(x=>x!==id);delete CAT.rd.ed[id];catSave();ADM_R()}
+function catDzDelA(id){if(!confirm('Excluir definitivamente este documento incluído?'))return;CAT.rd.add=CAT.rd.add.filter(a=>a.id!==id);catSave();ADM_R()}
+
+// ---- informações vinculadas aos medicamentos (tabela INFO)
+function catTabMed(){
+  const m=CATUI.med&&MC[CATUI.med]?CATUI.med:'',alt=Object.keys(CAT.info);
+  let h=`<div class="frow"><div><label>Medicamento</label><input id="md_q" list="md_l" value="${E(m)}" placeholder="Digite e escolha na lista" onchange="CATUI.med=this.value;ADM_R()"><datalist id="md_l">${MEDS.map(x=>`<option value="${E(x)}">`).join('')}</datalist></div></div>`;
+  if(m){const ent=MC[m].map(e=>`${E(e[0])} (CID ${E(e[2].join(', '))})${e[1]?' — '+E(e[1]):''}`).join('<br>');
+    h+=`<div class="card"><div class="hint">${ent}</div><label>Informação vinculada ao medicamento (aparece na conferência e nos avisos)</label><textarea id="md_t" rows="7">${E(INFO[m]||'')}</textarea><div class="cat-b" style="margin-top:12px"><button class="btn" onclick="catMedSave()">💾 Salvar</button>${CAT.info[m]!=null?'<button class="btn ghost" onclick="catMedRestore()">↩️ Voltar ao padrão</button>':''}</div></div>`}
+  else h+='<div class="note">Escolha um medicamento para ver e alterar a informação vinculada a ele.</div>';
+  if(alt.length)h+=`<h2>Medicamentos com informação alterada (${alt.length})</h2><div>${alt.map(x=>`<span class="chip" onclick="CATUI.med=${JSON.stringify(x).replace(/"/g,'&quot;')};ADM_R()">${E(x)}</span>`).join('')}</div>`;
+  return h}
+function catMedSave(){const m=CATUI.med,t=cxEsc(document.getElementById('md_t').value);if(t===cxEsc(INFO0[m]||''))delete CAT.info[m];else CAT.info[m]=t;catSave();ADM_R()}
+function catMedRestore(){delete CAT.info[CATUI.med];catSave();ADM_R()}
+
+// ---- exportar, salvar e segurança
+function catTabExp(){
+  const nOv=Object.keys(CAT.ov).filter(k=>!CAT.ov[k].del).length,nDel=Object.keys(CAT.ov).filter(k=>CAT.ov[k].del).length,nRd=Object.keys(CAT.rd.ed).length+CAT.rd.del.length+CAT.rd.add.length;
+  return `<div class="card"><h2 style="margin-top:0">📤 Exportar para Excel</h2><div class="hint">Gera uma planilha (.xlsx) com 3 abas: <b>Documentos e regras</b> (documento ou formulário, regra de verificação e informação vinculada), <b>Documentos por doença</b> e <b>Informações medicamentos</b>. Reflete o catálogo atual, já com as suas alterações.</div><button class="btn ok" onclick="catExportXlsx()">📥 Baixar planilha Excel</button></div>
+  <div class="card"><h2 style="margin-top:0">💾 Publicar para todos os usuários</h2><div class="hint">Gera um novo HTML com o catálogo gravado dentro dele (inclusive a senha). Substitua o arquivo publicado para que todos passem a ver as mesmas regras.<br>Neste navegador: ${nOv} item(ns) alterado(s), ${nDel} excluído(s), ${CAT.novos.length} documento(s) incluído(s), ${nRd} ajuste(s) em documentos por doença e ${Object.keys(CAT.info).length} informação(ões) de medicamento.</div><button class="btn" onclick="catExportHtml()">💾 Salvar HTML com o catálogo</button> <button class="btn ghost" style="width:auto" onclick="catReset()">↩️ Descartar alterações deste navegador</button></div>
+  <div class="card"><h2 style="margin-top:0">🔑 Trocar a senha</h2><div class="frow"><div><label>Senha atual</label><input id="pw0" type="password" autocomplete="current-password"></div><div><label>Nova senha (mín. 6)</label><input id="pw1" type="password" autocomplete="new-password"></div></div><button class="btn ghost" style="width:auto;margin-top:8px" onclick="catPwChange()">Trocar senha</button><div class="hint" style="margin-top:8px">A senha só impede que alguém altere o catálogo pela tela. Como todo o sistema é um único arquivo HTML, ela não substitui o controle de quem tem acesso ao arquivo publicado.</div></div>`}
+function catReset(){if(!confirm('Descartar todas as alterações feitas neste navegador e voltar ao catálogo do arquivo? (A senha do arquivo continua valendo.)'))return;try{localStorage.removeItem(CATK)}catch(e){}CAT=catNorm(CATSH);CAT_BASE=null;catRebuild();ADMOK=false;CATUI.ed=null;ADM_R()}
+function catPwChange(){const a=document.getElementById('pw0').value,b=document.getElementById('pw1').value;if(catPw(a,CAT.pw.s).h!==CAT.pw.h){alert('Senha atual incorreta.');return}if(b.length<6){alert('A nova senha precisa ter pelo menos 6 caracteres.');return}CAT.pw=catPw(b);catSave();alert('Senha alterada.');document.getElementById('pw0').value='';document.getElementById('pw1').value=''}
+
 R();
 </script>
 <script id="acc-js">
